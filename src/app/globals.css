@@ -1,15 +1,12 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-geist-sans: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  --font-geist-mono: Monaco, Consolas, monospace;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,6 +20,21 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Prevent FOUC and layout shifts */
+.dashboard-banner,
+[class*="dashboard-banner"] {
+  border-radius: 1rem;
+  background: linear-gradient(to right, #2563eb, #4f46e5);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  padding: 2rem;
+  color: white;
+  transition: none;
+  transform: none;
+  /* Prevent layout shifts during initial render */
+  contain: layout style;
+  content-visibility: auto;
 }
 
 /* Custom form styles */
@@ -72,9 +84,41 @@ body {
   line-height: 1.6;
 }
 
-/* Smooth transitions */
-* {
+/* Smooth transitions - Applied selectively to avoid layout shifts */
+button,
+a,
+input,
+textarea,
+select,
+.transition-element {
   transition: all 0.2s ease-in-out;
+}
+
+/* Hover transitions for interactive elements */
+button:hover,
+a:hover,
+.hover-transition:hover {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Prevent layout shifts on dashboard banner */
+.dashboard-banner {
+  border-radius: 1rem !important;
+  background: linear-gradient(to right, #2563eb, #4f46e5) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
+  padding: 2rem !important;
+  color: white !important;
+  /* Prevent any transitions on this element and its children */
+  transition: none !important;
+  transform: none !important;
+  /* Ensure stable layout */
+  contain: layout style paint;
+  will-change: auto;
+}
+
+.dashboard-banner * {
+  transition: none !important;
+  transform: none !important;
 }
 
 /* Custom scrollbar */

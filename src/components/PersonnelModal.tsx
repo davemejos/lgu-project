@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X, User, Briefcase, Heart, Phone } from 'lucide-react'
+import { X, User, Briefcase, Heart } from 'lucide-react'
 
 const personnelSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -150,7 +150,7 @@ export default function PersonnelModal({ isOpen, onClose, onSave, personnel, mod
         const errorData = await response.json()
         setError(errorData.error || 'An error occurred')
       }
-    } catch (error) {
+    } catch {
       setError('An error occurred. Please try again.')
     } finally {
       setIsLoading(false)
@@ -434,7 +434,7 @@ export default function PersonnelModal({ isOpen, onClose, onSave, personnel, mod
 
             <div className="bg-gray-50 px-6 py-4 flex justify-between items-center border-t border-gray-200">
               <div className="flex space-x-2">
-                {tabs.map((tab, index) => (
+                {tabs.map((tab) => (
                   <div
                     key={tab.id}
                     className={`w-2 h-2 rounded-full ${

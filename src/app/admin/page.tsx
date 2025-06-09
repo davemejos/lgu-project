@@ -1,8 +1,17 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Users, UserCheck, UserX, Clock, Fish, FileText, MapPin, Building } from 'lucide-react'
+import { Users, UserCheck, UserX, Clock, Fish, FileText, Building } from 'lucide-react'
 import Link from 'next/link'
+
+interface Personnel {
+  id: number
+  name: string
+  email: string
+  department: string
+  status: 'Active' | 'Inactive' | 'On Leave' | 'Suspended'
+  documents?: unknown[]
+}
 
 interface DashboardStats {
   totalPersonnel: number
@@ -39,17 +48,17 @@ export default function AdminDashboard() {
 
         // Calculate department statistics
         const departmentStats: { [key: string]: number } = {}
-        personnel.forEach((person: any) => {
+        personnel.forEach((person: Personnel) => {
           departmentStats[person.department] = (departmentStats[person.department] || 0) + 1
         })
 
         const statsData = {
           totalPersonnel: personnel.length,
-          activePersonnel: personnel.filter((person: any) => person.status === 'Active').length,
-          inactivePersonnel: personnel.filter((person: any) => person.status === 'Inactive').length,
-          onLeavePersonnel: personnel.filter((person: any) => person.status === 'On Leave').length,
-          suspendedPersonnel: personnel.filter((person: any) => person.status === 'Suspended').length,
-          totalDocuments: personnel.reduce((total: number, person: any) => total + (person.documents?.length || 0), 0),
+          activePersonnel: personnel.filter((person: Personnel) => person.status === 'Active').length,
+          inactivePersonnel: personnel.filter((person: Personnel) => person.status === 'Inactive').length,
+          onLeavePersonnel: personnel.filter((person: Personnel) => person.status === 'On Leave').length,
+          suspendedPersonnel: personnel.filter((person: Personnel) => person.status === 'Suspended').length,
+          totalDocuments: personnel.reduce((total: number, person: Personnel) => total + (person.documents?.length || 0), 0),
           departmentStats
         }
 
@@ -108,7 +117,7 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       {/* Welcome Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-lg p-8 text-white">
+      <div className="dashboard-banner bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-lg p-8 text-white">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold mb-2">Welcome to Fisheries Registry</h1>

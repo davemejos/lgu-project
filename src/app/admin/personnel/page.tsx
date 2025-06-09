@@ -1,11 +1,10 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { Plus, Search, Edit, Trash2, Eye, Fish, Phone, MapPin, Building, Calendar, Users as UsersIcon } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
+import { useSearchParams, useRouter } from 'next/navigation'
+import { Plus, Search, Edit, Trash2, Eye, Fish } from 'lucide-react'
 import PersonnelModal from '@/components/PersonnelModal'
-import PersonnelViewModal from '@/components/PersonnelViewModal'
-import DeleteConfirmModal from '@/components/DeleteConfirmModal'
+import PersonnelDeleteModal from '@/components/PersonnelDeleteModal'
 
 interface Personnel {
   id: number
@@ -26,7 +25,7 @@ interface Personnel {
   childrenNames?: string
   createdAt: string
   updatedAt: string
-  documents?: any[]
+  documents?: unknown[]
 }
 
 interface PaginationInfo {
@@ -38,6 +37,7 @@ interface PaginationInfo {
 
 export default function PersonnelPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const [personnel, setPersonnel] = useState<Personnel[]>([])
   const [pagination, setPagination] = useState<PaginationInfo>({
     page: 1,
@@ -48,23 +48,11 @@ export default function PersonnelPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [isViewModalOpen, setIsViewModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [selectedPersonnel, setSelectedPersonnel] = useState<Personnel | null>(null)
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
 
-  useEffect(() => {
-    fetchPersonnel()
-  }, [pagination.page, searchTerm])
-
-  useEffect(() => {
-    // Check if we should open create modal from URL
-    if (searchParams.get('action') === 'create') {
-      handleCreatePersonnel()
-    }
-  }, [searchParams])
-
-  const fetchPersonnel = async () => {
+  const fetchPersonnel = useCallback(async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams({
@@ -84,7 +72,20 @@ export default function PersonnelPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [pagination.page, pagination.limit, searchTerm])
+
+  useEffect(() => {
+    fetchPersonnel()
+  }, [fetchPersonnel])
+
+  useEffect(() => {
+    // Check if we should open create modal from URL
+    if (searchParams.get('action') === 'create') {
+      setSelectedPersonnel(null)
+      setModalMode('create')
+      setIsModalOpen(true)
+    }
+  }, [searchParams])
 
   const handleCreatePersonnel = () => {
     setSelectedPersonnel(null)
@@ -99,8 +100,8 @@ export default function PersonnelPage() {
   }
 
   const handleViewPersonnel = (person: Personnel) => {
-    setSelectedPersonnel(person)
-    setIsViewModalOpen(true)
+    // Navigate to personnel detail page instead of opening modal
+    router.push(`/admin/personnel/${person.id}`)
   }
 
   const handleDeletePersonnel = (person: Personnel) => {
@@ -134,13 +135,7 @@ export default function PersonnelPage() {
     return statusStyles[status as keyof typeof statusStyles] || 'bg-gray-500 text-white'
   }
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
-  }
+
 
   return (
     <div className="space-y-6">
@@ -238,7 +233,7 @@ export default function PersonnelPage() {
 
                 {/* Table Body */}
                 <tbody className="bg-white divide-y divide-gray-100">
-                  {personnel.map((person, index) => (
+                  {personnel.map((person) => (
                     <tr key={person.id} className="hover:bg-gray-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
@@ -366,18 +361,12 @@ export default function PersonnelPage() {
         mode={modalMode}
       />
 
-      {/* <PersonnelViewModal
-        isOpen={isViewModalOpen}
-        onClose={() => setIsViewModalOpen(false)}
-        personnel={selectedPersonnel}
-      />
-
-      <DeleteConfirmModal
+      <PersonnelDeleteModal
         isOpen={isDeleteModalOpen}
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handlePersonnelDeleted}
         personnel={selectedPersonnel}
-      /> */}
+      />
     </div>
   )
 }

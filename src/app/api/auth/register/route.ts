@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { db } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 import { z } from 'zod'
 
@@ -19,9 +19,7 @@ export async function POST(request: NextRequest) {
     const validatedData = registerSchema.parse(body)
 
     // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email: validatedData.email }
-    })
+    const existingUser = await db.findUserByEmail(validatedData.email)
 
     if (existingUser) {
       return NextResponse.json({ error: 'User with this email already exists' }, { status: 400 })
@@ -31,17 +29,17 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(validatedData.password, 12)
 
     // Create user
-    const user = await prisma.user.create({
-      data: {
-        name: validatedData.name,
-        email: validatedData.email,
-        password: hashedPassword,
-        role: 'admin'
-      }
+    const user = await db.createUser({
+      name: validatedData.name,
+      email: validatedData.email,
+      password: hashedPassword,
+      role: 'admin',
+      status: 'ACTIVE'
     })
 
     // Return user without password
-    const { password, ...userWithoutPassword } = user
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { password: _, ...userWithoutPassword } = user
 
     return NextResponse.json(userWithoutPassword, { status: 201 })
   } catch (error) {

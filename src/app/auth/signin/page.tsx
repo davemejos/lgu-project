@@ -25,7 +25,11 @@ export default function SignInPage() {
     handleSubmit,
     formState: { errors }
   } = useForm<SignInForm>({
-    resolver: zodResolver(signInSchema)
+    resolver: zodResolver(signInSchema),
+    defaultValues: {
+      email: 'demo@admin.com',
+      password: 'demo123'
+    }
   })
 
   const onSubmit = async (data: SignInForm) => {
@@ -48,7 +52,7 @@ export default function SignInPage() {
           router.push('/admin')
         }
       }
-    } catch (error) {
+    } catch {
       setError('An error occurred. Please try again.')
     } finally {
       setIsLoading(false)
@@ -128,11 +132,19 @@ export default function SignInPage() {
           </div>
 
           <div className="text-center space-y-2">
-            <p className="text-sm text-gray-600">
-              Demo credentials: demo@admin.com / demo123
-            </p>
+            <div className="bg-blue-50 border border-blue-200 rounded-md p-3">
+              <p className="text-sm font-medium text-blue-800">
+                🚀 Demo Mode - Fields Pre-filled
+              </p>
+              <p className="text-xs text-blue-600 mt-1">
+                Email: demo@admin.com | Password: demo123
+              </p>
+              <p className="text-xs text-blue-500 mt-1">
+                Just click &quot;Sign in&quot; to access the panel!
+              </p>
+            </div>
             <p className="text-sm text-gray-500">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link href="/auth/register" className="font-medium text-indigo-600 hover:text-indigo-500">
                 Register here
               </Link>

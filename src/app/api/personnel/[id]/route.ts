@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { db } from '@/lib/db'
 import { z } from 'zod'
 
 const updatePersonnelSchema = z.object({
@@ -24,7 +24,7 @@ const updatePersonnelSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -32,12 +32,8 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const personnel = await prisma.personnel.findUnique({
-      where: { id: parseInt(params.id) },
-      include: {
-        documents: true
-      }
-    })
+    const { id } = await params
+    const personnel = await db.findPersonnelById(parseInt(id))
 
     if (!personnel) {
       return NextResponse.json({ error: 'Personnel not found' }, { status: 404 })
@@ -52,7 +48,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -60,13 +56,12 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { id } = await params
     const body = await request.json()
     const validatedData = updatePersonnelSchema.parse(body)
 
     // Check if personnel exists
-    const existingPersonnel = await prisma.personnel.findUnique({
-      where: { id: parseInt(params.id) }
-    })
+    const existingPersonnel = await db.findPersonnelById(parseInt(id))
 
     if (!existingPersonnel) {
       return NextResponse.json({ error: 'Personnel not found' }, { status: 404 })
@@ -74,22 +69,18 @@ export async function PUT(
 
     // Check if email is being changed and if it's already taken
     if (validatedData.email && validatedData.email !== existingPersonnel.email) {
-      const emailTaken = await prisma.personnel.findUnique({
-        where: { email: validatedData.email }
-      })
+      const emailTaken = await db.findPersonnelByEmail(validatedData.email)
 
       if (emailTaken) {
         return NextResponse.json({ error: 'Email already taken' }, { status: 400 })
       }
     }
 
-    const personnel = await prisma.personnel.update({
-      where: { id: parseInt(params.id) },
-      data: validatedData,
-      include: {
-        documents: true
-      }
-    })
+    const personnel = await db.updatePersonnel(parseInt(id), validatedData)
+
+    if (!personnel) {
+      return NextResponse.json({ error: 'Personnel not found' }, { status: 404 })
+    }
 
     return NextResponse.json(personnel)
   } catch (error) {
@@ -103,7 +94,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -111,17 +102,18 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const existingPersonnel = await prisma.personnel.findUnique({
-      where: { id: parseInt(params.id) }
-    })
+    const { id } = await params
+    const existingPersonnel = await db.findPersonnelById(parseInt(id))
 
     if (!existingPersonnel) {
       return NextResponse.json({ error: 'Personnel not found' }, { status: 404 })
     }
 
-    await prisma.personnel.delete({
-      where: { id: parseInt(params.id) }
-    })
+    const deleted = await db.deletePersonnel(parseInt(id))
+
+    if (!deleted) {
+      return NextResponse.json({ error: 'Personnel not found' }, { status: 404 })
+    }
 
     return NextResponse.json({ message: 'Personnel deleted successfully' })
   } catch (error) {

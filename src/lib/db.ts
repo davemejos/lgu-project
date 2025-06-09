@@ -1,9 +1,4 @@
-import { PrismaClient } from '@prisma/client'
+// Mock database using in-memory data
+import { MockDatabase } from './mockData'
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
-}
-
-export const prisma = globalForPrisma.prisma ?? new PrismaClient()
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+export const db = MockDatabase

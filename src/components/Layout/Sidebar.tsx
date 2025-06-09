@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { 
@@ -29,19 +29,9 @@ import {
   Download,
   Upload,
   Folder,
-  FolderOpen,
   Search,
   Filter,
-  SortAsc,
-  Grid,
-  List,
-  Eye,
-  Edit,
-  Trash2,
-  Plus,
-  Minus,
-  Save,
-  RefreshCw
+  Eye
 } from 'lucide-react'
 
 interface SidebarProps {

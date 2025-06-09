@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Fish, Users, FileText, MapPin, Camera, Printer, Menu, X, ChevronRight } from 'lucide-react'
+import { Fish, Users, FileText, MapPin, Camera, Printer } from 'lucide-react'
 
 export default function Home() {
   return (

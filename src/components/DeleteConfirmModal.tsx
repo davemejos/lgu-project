@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { AlertTriangle, X } from 'lucide-react'
 
 interface User {
-  id: string
+  id: number
   email: string
   name: string
   phone?: string
@@ -43,7 +43,7 @@ export default function DeleteConfirmModal({ isOpen, onClose, onConfirm, user }:
         const errorData = await response.json()
         setError(errorData.error || 'An error occurred while deleting the user')
       }
-    } catch (error) {
+    } catch {
       setError('An error occurred. Please try again.')
     } finally {
       setIsLoading(false)

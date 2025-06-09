@@ -3,7 +3,7 @@
 import { X, Mail, User, Phone, MapPin, Calendar, Activity } from 'lucide-react'
 
 interface User {
-  id: string
+  id: number
   email: string
   name: string
   phone?: string

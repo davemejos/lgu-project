@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { db } from '@/lib/db'
 import { z } from 'zod'
 
 const createPersonnelSchema = z.object({
@@ -34,41 +34,23 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10')
     const search = searchParams.get('search') || ''
 
-    const skip = (page - 1) * limit
+    const result = await db.getAllPersonnel(page, limit)
+    let personnel = result.data
 
-    const where = search
-      ? {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' as const } },
-            { email: { contains: search, mode: 'insensitive' as const } },
-            { department: { contains: search, mode: 'insensitive' as const } },
-            { position: { contains: search, mode: 'insensitive' as const } },
-            { status: { contains: search, mode: 'insensitive' as const } }
-          ]
-        }
-      : {}
-
-    const [personnel, total] = await Promise.all([
-      prisma.personnel.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        include: {
-          documents: true
-        }
-      }),
-      prisma.personnel.count({ where })
-    ])
+    // Filter by search if provided
+    if (search) {
+      personnel = personnel.filter(person =>
+        person.name.toLowerCase().includes(search.toLowerCase()) ||
+        person.email.toLowerCase().includes(search.toLowerCase()) ||
+        person.department.toLowerCase().includes(search.toLowerCase()) ||
+        (person.position && person.position.toLowerCase().includes(search.toLowerCase())) ||
+        person.status.toLowerCase().includes(search.toLowerCase())
+      )
+    }
 
     return NextResponse.json({
       personnel,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit)
-      }
+      pagination: result.pagination
     })
   } catch (error) {
     console.error('Error fetching personnel:', error)
@@ -86,19 +68,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = createPersonnelSchema.parse(body)
 
-    const existingPersonnel = await prisma.personnel.findUnique({
-      where: { email: validatedData.email }
-    })
+    const existingPersonnel = await db.findPersonnelByEmail(validatedData.email)
 
     if (existingPersonnel) {
       return NextResponse.json({ error: 'Personnel with this email already exists' }, { status: 400 })
     }
 
-    const personnel = await prisma.personnel.create({
-      data: validatedData,
-      include: {
-        documents: true
-      }
+    const personnel = await db.createPersonnel({
+      ...validatedData,
+      documents: []
     })
 
     return NextResponse.json(personnel, { status: 201 })

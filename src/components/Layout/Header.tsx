@@ -1,16 +1,15 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession, signOut } from 'next-auth/react'
-import { 
-  Bell, 
-  Search, 
-  User, 
-  Settings, 
-  LogOut, 
+import {
+  Bell,
+  Search,
+  User,
+  Settings,
+  LogOut,
   Menu,
   Sun,
-  Moon,
   Globe,
   HelpCircle,
   ChevronDown
@@ -18,19 +17,57 @@ import {
 
 interface HeaderProps {
   onMenuClick: () => void
-  isCollapsed: boolean
 }
 
-export default function Header({ onMenuClick, isCollapsed }: HeaderProps) {
+export default function Header({ onMenuClick }: HeaderProps) {
   const { data: session } = useSession()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
+
+  // Refs for click outside detection
+  const notificationsRef = useRef<HTMLDivElement>(null)
+  const userMenuRef = useRef<HTMLDivElement>(null)
 
   const notifications = [
     { id: 1, title: 'New personnel registered', time: '2 min ago', type: 'info' },
     { id: 2, title: 'System backup completed', time: '1 hour ago', type: 'success' },
     { id: 3, title: 'Document approval pending', time: '3 hours ago', type: 'warning' },
   ]
+
+  // Handle click outside and keyboard events to close dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Close notifications dropdown if clicked outside
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) {
+        setShowNotifications(false)
+      }
+
+      // Close user menu dropdown if clicked outside
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setShowUserMenu(false)
+      }
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // Close dropdowns on Escape key
+      if (event.key === 'Escape') {
+        setShowNotifications(false)
+        setShowUserMenu(false)
+      }
+    }
+
+    // Add event listeners when any dropdown is open
+    if (showNotifications || showUserMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+      document.addEventListener('keydown', handleKeyDown)
+    }
+
+    // Cleanup event listeners
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [showNotifications, showUserMenu])
 
   return (
     <header className="flex-shrink-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-sm">
@@ -89,7 +126,7 @@ export default function Header({ onMenuClick, isCollapsed }: HeaderProps) {
           </div>
 
           {/* Notifications */}
-          <div className="relative">
+          <div className="relative" ref={notificationsRef}>
             <button
               onClick={() => setShowNotifications(!showNotifications)}
               className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors relative"
@@ -108,7 +145,11 @@ export default function Header({ onMenuClick, isCollapsed }: HeaderProps) {
                 </div>
                 <div className="max-h-64 overflow-y-auto">
                   {notifications.map((notification) => (
-                    <div key={notification.id} className="px-4 py-3 hover:bg-gray-50 cursor-pointer">
+                    <div
+                      key={notification.id}
+                      className="px-4 py-3 hover:bg-gray-50 cursor-pointer transition-colors"
+                      onClick={() => setShowNotifications(false)}
+                    >
                       <div className="flex items-start space-x-3">
                         <div className={`h-2 w-2 rounded-full mt-2 ${
                           notification.type === 'success' ? 'bg-green-500' :
@@ -123,7 +164,10 @@ export default function Header({ onMenuClick, isCollapsed }: HeaderProps) {
                   ))}
                 </div>
                 <div className="px-4 py-2 border-t border-gray-100">
-                  <button className="text-sm text-blue-600 hover:text-blue-800 font-medium">
+                  <button
+                    className="text-sm text-blue-600 hover:text-blue-800 font-medium transition-colors"
+                    onClick={() => setShowNotifications(false)}
+                  >
                     View all notifications
                   </button>
                 </div>
@@ -132,7 +176,7 @@ export default function Header({ onMenuClick, isCollapsed }: HeaderProps) {
           </div>
 
           {/* User Menu */}
-          <div className="relative">
+          <div className="relative" ref={userMenuRef}>
             <button
               onClick={() => setShowUserMenu(!showUserMenu)}
               className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors"

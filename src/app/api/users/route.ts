@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { db } from '@/lib/db'
 import { z } from 'zod'
+import bcrypt from 'bcryptjs'
 
 const createUserSchema = z.object({
   email: z.string().email(),
   name: z.string().min(1),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
   phone: z.string().optional(),
   address: z.string().optional(),
   status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED']).optional()
@@ -24,29 +26,26 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '10')
     const search = searchParams.get('search') || ''
 
-    const skip = (page - 1) * limit
+    let users = await db.getAllUsers()
 
-    const where = search
-      ? {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' as const } },
-            { email: { contains: search, mode: 'insensitive' as const } }
-          ]
-        }
-      : {}
+    // Filter by search if provided
+    if (search) {
+      users = users.filter(user =>
+        user.name.toLowerCase().includes(search.toLowerCase()) ||
+        user.email.toLowerCase().includes(search.toLowerCase())
+      )
+    }
 
-    const [users, total] = await Promise.all([
-      prisma.user.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' }
-      }),
-      prisma.user.count({ where })
-    ])
+    // Sort by createdAt desc
+    users.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+
+    const total = users.length
+    const startIndex = (page - 1) * limit
+    const endIndex = startIndex + limit
+    const paginatedUsers = users.slice(startIndex, endIndex)
 
     return NextResponse.json({
-      users,
+      users: paginatedUsers,
       pagination: {
         page,
         limit,
@@ -70,16 +69,20 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validatedData = createUserSchema.parse(body)
 
-    const existingUser = await prisma.user.findUnique({
-      where: { email: validatedData.email }
-    })
+    const existingUser = await db.findUserByEmail(validatedData.email)
 
     if (existingUser) {
       return NextResponse.json({ error: 'User with this email already exists' }, { status: 400 })
     }
 
-    const user = await prisma.user.create({
-      data: validatedData
+    // Hash password
+    const hashedPassword = await bcrypt.hash(validatedData.password, 12)
+
+    const user = await db.createUser({
+      ...validatedData,
+      password: hashedPassword,
+      role: 'user',
+      status: validatedData.status || 'ACTIVE'
     })
 
     return NextResponse.json(user, { status: 201 })

@@ -80,7 +80,6 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Header */}
         <Header
           onMenuClick={toggleSidebar}
-          isCollapsed={sidebarCollapsed}
         />
 
         {/* Page Content */}

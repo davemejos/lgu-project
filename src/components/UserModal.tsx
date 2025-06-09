@@ -9,6 +9,7 @@ import { X } from 'lucide-react'
 const userSchema = z.object({
   email: z.string().email('Invalid email address'),
   name: z.string().min(1, 'Name is required'),
+  password: z.string().optional(),
   phone: z.string().optional(),
   address: z.string().optional(),
   status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED'])
@@ -17,7 +18,7 @@ const userSchema = z.object({
 type UserForm = z.infer<typeof userSchema>
 
 interface User {
-  id: string
+  id: number
   email: string
   name: string
   phone?: string
@@ -57,6 +58,7 @@ export default function UserModal({ isOpen, onClose, onSave, user, mode }: UserM
         reset({
           email: user.email,
           name: user.name,
+          password: '',
           phone: user.phone || '',
           address: user.address || '',
           status: user.status
@@ -65,6 +67,7 @@ export default function UserModal({ isOpen, onClose, onSave, user, mode }: UserM
         reset({
           email: '',
           name: '',
+          password: '',
           phone: '',
           address: '',
           status: 'ACTIVE'
@@ -78,16 +81,28 @@ export default function UserModal({ isOpen, onClose, onSave, user, mode }: UserM
     setIsLoading(true)
     setError('')
 
+    // Validate password for create mode
+    if (mode === 'create' && (!data.password || data.password.length < 6)) {
+      setError('Password is required and must be at least 6 characters')
+      setIsLoading(false)
+      return
+    }
+
     try {
       const url = mode === 'create' ? '/api/users' : `/api/users/${user?.id}`
       const method = mode === 'create' ? 'POST' : 'PUT'
+
+      // For edit mode, only include password if it's provided
+      const submitData = mode === 'edit' && !data.password
+        ? { ...data, password: undefined }
+        : data
 
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(submitData)
       })
 
       if (response.ok) {
@@ -97,7 +112,7 @@ export default function UserModal({ isOpen, onClose, onSave, user, mode }: UserM
         const errorData = await response.json()
         setError(errorData.error || 'An error occurred')
       }
-    } catch (error) {
+    } catch {
       setError('An error occurred. Please try again.')
     } finally {
       setIsLoading(false)
@@ -153,6 +168,20 @@ export default function UserModal({ isOpen, onClose, onSave, user, mode }: UserM
                 />
                 {errors.name && (
                   <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Password {mode === 'edit' ? '(Leave blank to keep current)' : ''}
+                </label>
+                <input
+                  {...register('password')}
+                  type="password"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                />
+                {errors.password && (
+                  <p className="mt-1 text-sm text-red-600">{errors.password.message}</p>
                 )}
               </div>
 

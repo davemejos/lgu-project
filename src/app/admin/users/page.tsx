@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react'
 import UserModal from '@/components/UserModal'
@@ -8,7 +8,7 @@ import UserViewModal from '@/components/UserViewModal'
 import DeleteConfirmModal from '@/components/DeleteConfirmModal'
 
 interface User {
-  id: string
+  id: number
   email: string
   name: string
   phone?: string
@@ -42,18 +42,7 @@ export default function UsersPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null)
   const [modalMode, setModalMode] = useState<'create' | 'edit'>('create')
 
-  useEffect(() => {
-    fetchUsers()
-  }, [pagination.page, searchTerm])
-
-  useEffect(() => {
-    // Check if we should open create modal from URL
-    if (searchParams.get('action') === 'create') {
-      handleCreateUser()
-    }
-  }, [searchParams])
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams({
@@ -73,7 +62,20 @@ export default function UsersPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [pagination.page, pagination.limit, searchTerm])
+
+  useEffect(() => {
+    fetchUsers()
+  }, [fetchUsers])
+
+  useEffect(() => {
+    // Check if we should open create modal from URL
+    if (searchParams.get('action') === 'create') {
+      setSelectedUser(null)
+      setModalMode('create')
+      setIsModalOpen(true)
+    }
+  }, [searchParams])
 
   const handleCreateUser = () => {
     setSelectedUser(null)
