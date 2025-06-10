@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useSession, signOut } from 'next-auth/react'
+import { useAuth } from '@/components/providers/SupabaseAuthProvider'
 import {
   Bell,
   Search,
@@ -20,7 +20,7 @@ interface HeaderProps {
 }
 
 export default function Header({ onMenuClick }: HeaderProps) {
-  const { data: session } = useSession()
+  const { user, signOut } = useAuth()
   const [showUserMenu, setShowUserMenu] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
 
@@ -183,12 +183,12 @@ export default function Header({ onMenuClick }: HeaderProps) {
             >
               <div className="h-8 w-8 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full flex items-center justify-center">
                 <span className="text-sm font-medium text-white">
-                  {session?.user?.email?.charAt(0).toUpperCase() || 'U'}
+                  {user?.email?.charAt(0).toUpperCase() || 'U'}
                 </span>
               </div>
               <div className="hidden md:block text-left">
                 <p className="text-sm font-medium text-gray-900">
-                  {session?.user?.email?.split('@')[0] || 'User'}
+                  {user?.email?.split('@')[0] || 'User'}
                 </p>
                 <p className="text-xs text-gray-500">Administrator</p>
               </div>
@@ -200,9 +200,9 @@ export default function Header({ onMenuClick }: HeaderProps) {
               <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
                 <div className="px-4 py-3 border-b border-gray-100">
                   <p className="text-sm font-medium text-gray-900">
-                    {session?.user?.email?.split('@')[0] || 'User'}
+                    {user?.email?.split('@')[0] || 'User'}
                   </p>
-                  <p className="text-xs text-gray-500">{session?.user?.email}</p>
+                  <p className="text-xs text-gray-500">{user?.email}</p>
                 </div>
                 
                 <div className="py-1">

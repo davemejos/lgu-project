@@ -1,4 +1,13 @@
-// Mock database using in-memory data
-import { MockDatabase } from './mockData'
+/**
+ * Enterprise Database Connection
+ * This file provides the main database interface for the application.
+ * It now uses Supabase instead of mock data for production-ready functionality.
+ */
 
-export const db = MockDatabase
+import { DatabaseService } from './database'
+
+// Export the enterprise database service as the main database interface
+export const db = DatabaseService
+
+// For backward compatibility and easy migration, we also export it as default
+export default DatabaseService

@@ -26,7 +26,7 @@ export default function MediaCenterPage() {
         <div className="bg-white rounded-2xl shadow-lg p-6 border border-purple-100">
           <div className="flex items-center">
             <div className="p-3 bg-purple-100 rounded-xl">
-              <Image className="h-6 w-6 text-purple-600" />
+              <Image className="h-6 w-6 text-purple-600" aria-label="Images icon" />
             </div>
             <div className="ml-4">
               <p className="text-sm font-medium text-gray-600">Total Images</p>
@@ -109,7 +109,7 @@ export default function MediaCenterPage() {
             <div key={i} className="group relative bg-gray-100 rounded-lg aspect-square overflow-hidden hover:shadow-lg transition-shadow">
               <div className="absolute inset-0 bg-gradient-to-br from-purple-400 to-pink-400 opacity-20"></div>
               <div className="absolute inset-0 flex items-center justify-center">
-                <Image className="h-12 w-12 text-gray-400" />
+                <Image className="h-12 w-12 text-gray-400" aria-label="Media placeholder" />
               </div>
               <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
                 <div className="flex items-center space-x-2">

@@ -8,7 +8,7 @@ interface TestResult {
   test: string
   success: boolean
   message: string
-  details?: unknown
+  details?: Record<string, unknown> | string | number | boolean | null
   duration?: number
 }
 
@@ -54,7 +54,7 @@ export default function TestSupabasePage() {
         test: 'Service Health Check',
         success: healthResult.success,
         message: healthResult.message,
-        details: healthResult.details,
+        details: healthResult.details as Record<string, unknown> | string | number | boolean | null,
         duration
       })
     } catch (error) {
@@ -95,8 +95,8 @@ export default function TestSupabasePage() {
       results.push({
         test: 'Personnel Operations Test',
         success: true,
-        message: `Successfully queried personnel table. Found ${personnel.length} personnel records.`,
-        details: { personnelCount: personnel.length, personnel: personnel.slice(0, 3) },
+        message: `Successfully queried personnel table. Found ${personnel.data.length} personnel records.`,
+        details: { personnelCount: personnel.data.length, personnel: personnel.data.slice(0, 3), pagination: personnel.pagination },
         duration
       })
     } catch (error) {
@@ -235,7 +235,7 @@ export default function TestSupabasePage() {
                     <p className={`text-sm ${getStatusColor(result.success)} mb-2`}>
                       {result.message}
                     </p>
-                    {result.details && (
+                    {result.details != null && (
                       <details className="text-xs text-gray-600">
                         <summary className="cursor-pointer hover:text-gray-800">
                           View Details

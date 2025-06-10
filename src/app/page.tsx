@@ -35,7 +35,7 @@ export default function Home() {
             {/* CTA Buttons */}
             <div className="flex items-center space-x-4">
               <Link
-                href="/auth/signin"
+                href="/auth/login"
                 className="text-blue-600 hover:text-blue-800 font-medium transition-colors"
               >
                 Sign In
@@ -204,7 +204,7 @@ export default function Home() {
               Access Fisheries Registry
             </Link>
             <Link
-              href="/auth/signin"
+              href="/auth/login"
               className="inline-flex items-center px-8 py-4 border border-blue-300 text-lg font-medium rounded-xl text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 shadow-lg transform hover:scale-105 transition-all duration-200"
             >
               Sign In
@@ -263,9 +263,8 @@ export default function Home() {
               <span className="font-medium bg-gray-100 px-3 py-1 rounded-full">Next.js 15</span>
               <span className="font-medium bg-gray-100 px-3 py-1 rounded-full">TypeScript</span>
               <span className="font-medium bg-gray-100 px-3 py-1 rounded-full">Tailwind CSS</span>
-              <span className="font-medium bg-gray-100 px-3 py-1 rounded-full">Prisma ORM</span>
-              <span className="font-medium bg-gray-100 px-3 py-1 rounded-full">NextAuth.js</span>
-              <span className="font-medium bg-gray-100 px-3 py-1 rounded-full">SQLite</span>
+              <span className="font-medium bg-gray-100 px-3 py-1 rounded-full">Supabase</span>
+              <span className="font-medium bg-gray-100 px-3 py-1 rounded-full">Supabase Auth</span>
             </div>
           </div>
         </div>

@@ -1,3 +1,11 @@
+/**
+ * DEPRECATED: This file is being replaced by the new Supabase Auth utilities
+ * Please use utils/supabase/client.ts and utils/supabase/server.ts instead
+ *
+ * This file is kept for backward compatibility with existing database operations
+ * but should not be used for new authentication features.
+ */
+
 import { createClient } from '@supabase/supabase-js'
 import { Database } from './database.types'
 
@@ -14,7 +22,7 @@ if (!supabaseUrl || !supabaseAnonKey) {
   })
 }
 
-// Client for browser/client-side operations
+// Legacy client for backward compatibility (database operations only)
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
@@ -31,7 +39,7 @@ export const supabaseAdmin = createClient<Database>(supabaseUrl, supabaseService
   }
 })
 
-// Helper function to get server-side client
+// Helper function to get server-side client (legacy)
 export const getSupabaseServerClient = () => {
   return createClient<Database>(supabaseUrl, supabaseAnonKey)
 }

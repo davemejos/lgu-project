@@ -1,0 +1,23 @@
+{
+  "extends": [
+    "next/core-web-vitals"
+  ],
+  "rules": {
+    "jsx-a11y/alt-text": [
+      "error",
+      {
+        "elements": ["img"],
+        "img": ["Image"]
+      }
+    ]
+  },
+  "overrides": [
+    {
+      "files": ["**/*.tsx", "**/*.ts"],
+      "rules": {
+        "@typescript-eslint/no-explicit-any": "error",
+        "@typescript-eslint/no-unused-vars": "error"
+      }
+    }
+  ]
+}

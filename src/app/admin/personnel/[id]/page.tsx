@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Image from 'next/image'
 import { 
@@ -58,13 +58,7 @@ export default function PersonnelDetailPage() {
 
 
 
-  useEffect(() => {
-    if (personnelId) {
-      fetchPersonnel()
-    }
-  }, [personnelId, fetchPersonnel])
-
-  const fetchPersonnel = async () => {
+  const fetchPersonnel = useCallback(async () => {
     setLoading(true)
     setError('')
     try {
@@ -83,7 +77,13 @@ export default function PersonnelDetailPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [personnelId])
+
+  useEffect(() => {
+    if (personnelId) {
+      fetchPersonnel()
+    }
+  }, [personnelId, fetchPersonnel])
 
   const handleBack = () => {
     router.push('/admin/personnel')

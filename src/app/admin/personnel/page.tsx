@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
-import { Plus, Search, Edit, Trash2, Eye, Fish } from 'lucide-react'
+import { Plus, Search, Edit, Trash2, Eye, Fish, ArrowUpDown, List, Grid3X3, MapPin, Phone, Mail, Calendar, User } from 'lucide-react'
 import PersonnelModal from '@/components/PersonnelModal'
 import PersonnelDeleteModal from '@/components/PersonnelDeleteModal'
 
@@ -47,6 +47,8 @@ export default function PersonnelPage() {
   })
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
+  const [sortBy, setSortBy] = useState<'id_asc' | 'id_desc' | 'name_asc' | 'name_desc'>('name_asc')
+  const [viewMode, setViewMode] = useState<'list' | 'cards'>('list')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
   const [selectedPersonnel, setSelectedPersonnel] = useState<Personnel | null>(null)
@@ -58,7 +60,8 @@ export default function PersonnelPage() {
       const params = new URLSearchParams({
         page: pagination.page.toString(),
         limit: pagination.limit.toString(),
-        ...(searchTerm && { search: searchTerm })
+        ...(searchTerm && { search: searchTerm }),
+        sort: sortBy
       })
 
       const response = await fetch(`/api/personnel?${params}`)
@@ -72,7 +75,7 @@ export default function PersonnelPage() {
     } finally {
       setLoading(false)
     }
-  }, [pagination.page, pagination.limit, searchTerm])
+  }, [pagination.page, pagination.limit, searchTerm, sortBy])
 
   useEffect(() => {
     fetchPersonnel()
@@ -125,6 +128,11 @@ export default function PersonnelPage() {
     fetchPersonnel()
   }
 
+  const handleSortChange = (newSort: 'id_asc' | 'id_desc' | 'name_asc' | 'name_desc') => {
+    setSortBy(newSort)
+    setPagination(prev => ({ ...prev, page: 1 }))
+  }
+
   const getStatusBadge = (status: string) => {
     const statusStyles = {
       'Active': 'bg-green-500 text-white',
@@ -134,6 +142,91 @@ export default function PersonnelPage() {
     }
     return statusStyles[status as keyof typeof statusStyles] || 'bg-gray-500 text-white'
   }
+
+  const renderCardsView = () => (
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {personnel.map((person) => (
+        <div key={person.id} className="bg-white rounded-2xl shadow-lg border border-blue-100 hover:shadow-xl transition-all duration-300 transform hover:scale-105">
+          {/* Card Header */}
+          <div className="p-6 border-b border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center space-x-3">
+                <div className="h-12 w-12 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full flex items-center justify-center">
+                  <User className="h-6 w-6 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 truncate">{person.name}</h3>
+                  <p className="text-sm text-gray-500">ID: {person.id}</p>
+                </div>
+              </div>
+              <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium uppercase ${getStatusBadge(person.status)}`}>
+                {person.status}
+              </span>
+            </div>
+          </div>
+
+          {/* Card Body */}
+          <div className="p-6 space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-center text-sm text-gray-600">
+                <Mail className="h-4 w-4 mr-3 text-gray-400 flex-shrink-0" />
+                <span className="truncate">{person.email}</span>
+              </div>
+
+              {person.phone && (
+                <div className="flex items-center text-sm text-gray-600">
+                  <Phone className="h-4 w-4 mr-3 text-gray-400 flex-shrink-0" />
+                  <span>{person.phone}</span>
+                </div>
+              )}
+
+              <div className="flex items-center text-sm text-gray-600">
+                <MapPin className="h-4 w-4 mr-3 text-gray-400 flex-shrink-0" />
+                <span className="truncate">{person.department}</span>
+              </div>
+
+              {person.position && (
+                <div className="flex items-center text-sm text-gray-600">
+                  <Calendar className="h-4 w-4 mr-3 text-gray-400 flex-shrink-0" />
+                  <span className="truncate">{person.position}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Card Footer */}
+          <div className="px-6 py-4 bg-gray-50 rounded-b-2xl">
+            <div className="flex items-center justify-between space-x-2">
+              <button
+                onClick={() => handleViewPersonnel(person)}
+                className="flex-1 inline-flex items-center justify-center px-3 py-2 rounded-lg text-xs font-medium text-white bg-green-600 hover:bg-green-700 transition-colors"
+                title="View Details"
+              >
+                <Eye className="h-3 w-3 mr-1" />
+                VIEW
+              </button>
+              <button
+                onClick={() => handleEditPersonnel(person)}
+                className="flex-1 inline-flex items-center justify-center px-3 py-2 rounded-lg text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors"
+                title="Edit Personnel"
+              >
+                <Edit className="h-3 w-3 mr-1" />
+                EDIT
+              </button>
+              <button
+                onClick={() => handleDeletePersonnel(person)}
+                className="flex-1 inline-flex items-center justify-center px-3 py-2 rounded-lg text-xs font-medium text-white bg-red-600 hover:bg-red-700 transition-colors"
+                title="Delete Personnel"
+              >
+                <Trash2 className="h-3 w-3 mr-1" />
+                DELETE
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  )
 
 
 
@@ -163,45 +256,106 @@ export default function PersonnelPage() {
         </div>
       </div>
 
-      {/* Search */}
+      {/* Search and Sort */}
       <div className="bg-white rounded-xl shadow-lg p-6 border border-blue-100">
-        <form onSubmit={handleSearch} className="flex gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Search className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base"
-                    placeholder="Search personnel by name, email, department, position, or status..."
-                  />
+        <div className="flex flex-col lg:flex-row gap-4">
+          {/* Search Form */}
+          <form onSubmit={handleSearch} className="flex gap-4 flex-1">
+            <div className="flex-1">
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-5 w-5 text-gray-400" />
                 </div>
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-xl leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 text-base"
+                  placeholder="Search personnel by name, email, department, position, or status..."
+                />
               </div>
-              <button
-                type="submit"
-                className="px-6 py-3 border border-gray-300 rounded-xl shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+            </div>
+            <button
+              type="submit"
+              className="px-6 py-3 border border-gray-300 rounded-xl shadow-sm text-base font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors"
+            >
+              Search
+            </button>
+          </form>
+
+          {/* Sort and View Controls */}
+          <div className="flex items-center gap-6">
+            {/* Sort Dropdown */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center text-sm font-medium text-gray-700">
+                <ArrowUpDown className="h-4 w-4 mr-2 text-gray-500" />
+                Sort by:
+              </div>
+              <select
+                value={sortBy}
+                onChange={(e) => handleSortChange(e.target.value as 'id_asc' | 'id_desc' | 'name_asc' | 'name_desc')}
+                className="px-4 py-3 border border-gray-300 rounded-xl text-base font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors min-w-[160px]"
               >
-                Search
-              </button>
-        </form>
+                <option value="id_asc">ID (ASC)</option>
+                <option value="id_desc">ID (DESC)</option>
+                <option value="name_asc">A - Z</option>
+                <option value="name_desc">Z - A</option>
+              </select>
+            </div>
+
+            {/* View Toggle */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center text-sm font-medium text-gray-700">
+                View:
+              </div>
+              <div className="flex rounded-xl border border-gray-300 overflow-hidden">
+                <button
+                  onClick={() => setViewMode('list')}
+                  className={`px-4 py-3 flex items-center gap-2 text-sm font-medium transition-colors ${
+                    viewMode === 'list'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <List className="h-4 w-4" />
+                  List
+                </button>
+                <button
+                  onClick={() => setViewMode('cards')}
+                  className={`px-4 py-3 flex items-center gap-2 text-sm font-medium transition-colors border-l border-gray-300 ${
+                    viewMode === 'cards'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <Grid3X3 className="h-4 w-4" />
+                  Cards
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Personnel Table */}
-      <div className="bg-white shadow-lg overflow-hidden rounded-2xl border border-blue-100">
-          {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
-            </div>
-          ) : personnel.length === 0 ? (
-            <div className="text-center py-16">
-              <Fish className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-              <p className="text-xl text-gray-500 mb-2">No personnel found</p>
-              <p className="text-gray-400">Start by registering your first fisheries personnel</p>
-            </div>
-          ) : (
+      {/* Personnel Content */}
+      {loading ? (
+        <div className="bg-white shadow-lg rounded-2xl border border-blue-100">
+          <div className="flex items-center justify-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+          </div>
+        </div>
+      ) : personnel.length === 0 ? (
+        <div className="bg-white shadow-lg rounded-2xl border border-blue-100">
+          <div className="text-center py-16">
+            <Fish className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+            <p className="text-xl text-gray-500 mb-2">No personnel found</p>
+            <p className="text-gray-400">Start by registering your first fisheries personnel</p>
+          </div>
+        </div>
+      ) : viewMode === 'cards' ? (
+        renderCardsView()
+      ) : (
+        <div className="bg-white shadow-lg overflow-hidden rounded-2xl border border-blue-100">
             <div className="overflow-x-auto">
               <table className="min-w-full">
                 {/* Table Header */}
@@ -298,8 +452,8 @@ export default function PersonnelPage() {
                 </tbody>
               </table>
             </div>
-          )}
-      </div>
+        </div>
+      )}
 
       {/* Pagination */}
       {pagination.pages > 1 && (

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
+import { useAuth } from '@/components/providers/SupabaseAuthProvider'
 import { useRouter } from 'next/navigation'
 import Sidebar from './Sidebar'
 import Header from './Header'
@@ -13,7 +13,7 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
-  const { data: session, status } = useSession()
+  const { user, loading } = useAuth()
   const router = useRouter()
 
   // Handle responsive behavior
@@ -33,12 +33,12 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // Redirect if not authenticated
   useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/auth/signin')
+    if (!loading && !user) {
+      router.push('/auth/login')
     }
-  }, [status, router])
+  }, [loading, user, router])
 
-  if (status === 'loading') {
+  if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -49,7 +49,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     )
   }
 
-  if (!session) {
+  if (!user) {
     return null
   }
 

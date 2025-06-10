@@ -1,3 +1,10 @@
+/**
+ * Supabase Authentication Registration Page
+ *
+ * This page allows new users to create accounts using Supabase Auth.
+ * It includes proper validation and error handling.
+ */
+
 'use client'
 
 import { useState } from 'react'
@@ -6,6 +13,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import Link from 'next/link'
+import { createClient } from '@/utils/supabase/client'
 
 const registerSchema = z.object({
   name: z.string().min(1, 'Full name is required'),
@@ -24,6 +32,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const router = useRouter()
+  const supabase = createClient()
 
   const {
     register,
@@ -38,23 +47,30 @@ export default function RegisterPage() {
     setError('')
 
     try {
-      const response = await fetch('/api/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.password,
+        options: {
+          data: {
+            name: data.name,
+            role: 'admin' // Default role for new users
+          }
+        }
       })
 
-      if (response.ok) {
-        setSuccess(true)
-        setTimeout(() => {
-          router.push('/auth/signin')
-        }, 2000)
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || 'Registration failed')
+      if (signUpError) {
+        if (signUpError.message.includes('already registered')) {
+          setError('An account with this email already exists. Please sign in instead.')
+        } else {
+          setError(signUpError.message)
+        }
+        return
       }
+
+      setSuccess(true)
+      setTimeout(() => {
+        router.push('/auth/login')
+      }, 2000)
     } catch {
       setError('An error occurred. Please try again.')
     } finally {
@@ -187,7 +203,7 @@ export default function RegisterPage() {
           <div className="text-center">
             <p className="text-sm text-gray-600">
               Already have an account?{' '}
-              <Link href="/auth/signin" className="font-medium text-indigo-600 hover:text-indigo-500">
+              <Link href="/auth/login" className="font-medium text-indigo-600 hover:text-indigo-500">
                 Sign in here
               </Link>
             </p>

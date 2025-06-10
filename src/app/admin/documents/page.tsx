@@ -99,7 +99,7 @@ export default function DocumentsPage() {
       case 'XLS':
         return <FileSpreadsheet className="h-5 w-5 text-green-500" />
       case 'IMG':
-        return <Image className="h-5 w-5 text-purple-500" />
+        return <Image className="h-5 w-5 text-purple-500" aria-label="Image file icon" />
       default:
         return <File className="h-5 w-5 text-gray-500" />
     }

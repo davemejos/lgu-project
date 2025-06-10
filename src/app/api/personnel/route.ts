@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { createClient } from '@/utils/supabase/server'
 import { db } from '@/lib/db'
 import { z } from 'zod'
 
@@ -24,8 +23,10 @@ const createPersonnelSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -33,35 +34,39 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const search = searchParams.get('search') || ''
+    const department = searchParams.get('department') || ''
+    const status = searchParams.get('status') || ''
+    const sort = searchParams.get('sort') || 'name_asc'
 
-    const result = await db.getAllPersonnel(page, limit)
-    let personnel = result.data
+    console.log(`[API] GET /api/personnel - Page: ${page}, Limit: ${limit}, Search: "${search}", Department: "${department}", Status: "${status}", Sort: "${sort}"`)
 
-    // Filter by search if provided
-    if (search) {
-      personnel = personnel.filter(person =>
-        person.name.toLowerCase().includes(search.toLowerCase()) ||
-        person.email.toLowerCase().includes(search.toLowerCase()) ||
-        person.department.toLowerCase().includes(search.toLowerCase()) ||
-        (person.position && person.position.toLowerCase().includes(search.toLowerCase())) ||
-        person.status.toLowerCase().includes(search.toLowerCase())
-      )
-    }
+    // Use the new database service with built-in filtering and pagination
+    const result = await db.getAllPersonnel(page, limit, {
+      search: search || undefined,
+      department: department || undefined,
+      status: status || undefined,
+      sort: sort as 'id_asc' | 'id_desc' | 'name_asc' | 'name_desc'
+    })
 
     return NextResponse.json({
-      personnel,
+      personnel: result.data,
       pagination: result.pagination
     })
   } catch (error) {
-    console.error('Error fetching personnel:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('[API] Error fetching personnel:', error)
+    return NextResponse.json({
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -75,8 +80,21 @@ export async function POST(request: NextRequest) {
     }
 
     const personnel = await db.createPersonnel({
-      ...validatedData,
-      documents: []
+      name: validatedData.name,
+      email: validatedData.email,
+      phone: validatedData.phone || null,
+      address: validatedData.address || null,
+      profile_photo: validatedData.profilePhoto || null,
+      department: validatedData.department,
+      position: validatedData.position || null,
+      hire_date: validatedData.hireDate || null,
+      status: validatedData.status,
+      biography: validatedData.biography || null,
+      spouse_name: validatedData.spouseName || null,
+      spouse_occupation: validatedData.spouseOccupation || null,
+      children_count: validatedData.childrenCount || null,
+      emergency_contact: validatedData.emergencyContact || null,
+      children_names: validatedData.childrenNames || null
     })
 
     return NextResponse.json(personnel, { status: 201 })

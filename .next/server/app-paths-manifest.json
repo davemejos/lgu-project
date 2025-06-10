@@ -1,12 +1,9 @@
 {
-  "/api/auth/[...nextauth]/route": "app/api/auth/[...nextauth]/route.js",
   "/api/personnel/route": "app/api/personnel/route.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
   "/page": "app/page.js",
-  "/admin/analytics/page": "app/admin/analytics/page.js",
-  "/admin/calendar/page": "app/admin/calendar/page.js",
-  "/admin/print/page": "app/admin/print/page.js",
-  "/admin/files/page": "app/admin/files/page.js",
+  "/auth/login/page": "app/auth/login/page.js",
+  "/debug-auth/page": "app/debug-auth/page.js",
   "/admin/page": "app/admin/page.js",
-  "/admin/filters/page": "app/admin/filters/page.js",
-  "/admin/search/page": "app/admin/search/page.js"
+  "/admin/personnel/page": "app/admin/personnel/page.js"
 }

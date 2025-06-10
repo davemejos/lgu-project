@@ -1,23 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { createClient } from '@/utils/supabase/server'
 import { db } from '@/lib/db'
-import { z } from 'zod'
-import bcrypt from 'bcryptjs'
-
-const createUserSchema = z.object({
-  email: z.string().email(),
-  name: z.string().min(1),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  phone: z.string().optional(),
-  address: z.string().optional(),
-  status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED']).optional()
-})
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -25,71 +15,57 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '10')
     const search = searchParams.get('search') || ''
+    const status = searchParams.get('status') || ''
 
-    let users = await db.getAllUsers()
+    console.log(`[API] GET /api/users - Page: ${page}, Limit: ${limit}, Search: "${search}", Status: "${status}"`)
 
-    // Filter by search if provided
-    if (search) {
-      users = users.filter(user =>
-        user.name.toLowerCase().includes(search.toLowerCase()) ||
-        user.email.toLowerCase().includes(search.toLowerCase())
-      )
-    }
+    // Use the new database service with built-in filtering and pagination
+    const users = await db.getAllUsers({
+      page,
+      limit,
+      search: search || undefined,
+      status: status || undefined
+    })
 
-    // Sort by createdAt desc
-    users.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-
-    const total = users.length
-    const startIndex = (page - 1) * limit
-    const endIndex = startIndex + limit
-    const paginatedUsers = users.slice(startIndex, endIndex)
+    // Get total count for pagination (without pagination applied)
+    const allUsers = await db.getAllUsers({
+      search: search || undefined,
+      status: status || undefined
+    })
 
     return NextResponse.json({
-      users: paginatedUsers,
+      users: users,
       pagination: {
         page,
         limit,
-        total,
-        pages: Math.ceil(total / limit)
+        total: allUsers.length,
+        pages: Math.ceil(allUsers.length / limit)
       }
     })
   } catch (error) {
-    console.error('Error fetching users:', error)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('[API] Error fetching users:', error)
+    return NextResponse.json({
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
-    const validatedData = createUserSchema.parse(body)
-
-    const existingUser = await db.findUserByEmail(validatedData.email)
-
-    if (existingUser) {
-      return NextResponse.json({ error: 'User with this email already exists' }, { status: 400 })
-    }
-
-    // Hash password
-    const hashedPassword = await bcrypt.hash(validatedData.password, 12)
-
-    const user = await db.createUser({
-      ...validatedData,
-      password: hashedPassword,
-      role: 'user',
-      status: validatedData.status || 'ACTIVE'
-    })
-
-    return NextResponse.json(user, { status: 201 })
+    // Note: User creation should be handled through Supabase Auth registration
+    // This endpoint is for updating user profile information only
+    return NextResponse.json({
+      error: 'User creation should be done through /auth/register endpoint'
+    }, { status: 400 })
   } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 })
-    }
     console.error('Error creating user:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
