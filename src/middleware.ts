@@ -14,15 +14,31 @@ import { Database } from '@/lib/database.types'
 
 export async function middleware(request: NextRequest) {
   try {
+    // Skip middleware for static files and API routes
+    if (
+      request.nextUrl.pathname.startsWith('/_next/') ||
+      request.nextUrl.pathname.startsWith('/api/') ||
+      request.nextUrl.pathname.includes('.') ||
+      request.nextUrl.pathname === '/favicon.ico'
+    ) {
+      return NextResponse.next()
+    }
+
     // Update the user session
     const supabaseResponse = await updateSession(request)
 
     // Only check authentication for admin routes (already filtered by matcher)
     if (request.nextUrl.pathname.startsWith('/admin')) {
+      // Validate environment variables
+      if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        console.error('Missing Supabase environment variables')
+        return NextResponse.next()
+      }
+
       // Create a Supabase client to check authentication
       const supabase = createServerClient<Database>(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
         {
           cookies: {
             getAll() {

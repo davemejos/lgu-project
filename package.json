@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "fix-tailwind": "node scripts/fix-tailwind.js",
-    "clean": "rm -rf .next && rm -rf node_modules/.cache && rm -f tsconfig.tsbuildinfo",
+    "clean": "rmdir /s /q .next 2>nul & rmdir /s /q node_modules\\.cache 2>nul & del tsconfig.tsbuildinfo 2>nul & echo Clean completed",
+    "clean:unix": "rm -rf .next && rm -rf node_modules/.cache && rm -f tsconfig.tsbuildinfo",
     "reset": "npm run clean && npm install && npm run dev"
   },
   "dependencies": {
