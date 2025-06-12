@@ -1,22 +1,57 @@
 'use client'
 
-import { LucideIcon } from 'lucide-react'
+import {
+  Activity,
+  Archive,
+  Database,
+  Download,
+  Eye,
+  Filter,
+  Folder,
+  Mail,
+  MessageSquare,
+  Printer,
+  Search,
+  Shield,
+  Upload
+} from 'lucide-react'
 
 interface PlaceholderPageProps {
   title: string
   description: string
-  icon: LucideIcon
+  iconName: string
   features: string[]
   comingSoon?: boolean
 }
 
-export default function PlaceholderPage({ 
-  title, 
-  description, 
-  icon: Icon, 
-  features, 
-  comingSoon = true 
+const getIcon = (iconName: string) => {
+  const iconMap = {
+    Activity,
+    Archive,
+    Database,
+    Download,
+    Eye,
+    Filter,
+    Folder,
+    Mail,
+    MessageSquare,
+    Printer,
+    Search,
+    Shield,
+    Upload
+  }
+
+  return iconMap[iconName as keyof typeof iconMap] || Activity
+}
+
+export default function PlaceholderPage({
+  title,
+  description,
+  iconName,
+  features,
+  comingSoon = true
 }: PlaceholderPageProps) {
+  const Icon = getIcon(iconName)
   return (
     <div className="space-y-6">
       {/* Header */}

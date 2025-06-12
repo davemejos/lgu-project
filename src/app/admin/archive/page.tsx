@@ -1,5 +1,4 @@
 import PlaceholderPage from '@/components/PlaceholderPage'
-import { Archive } from 'lucide-react'
 
 export default function ArchivePage() {
   const features = [
@@ -19,7 +18,7 @@ export default function ArchivePage() {
     <PlaceholderPage
       title="Archive Management"
       description="Manage archived records and historical data"
-      icon={Archive}
+      iconName="Archive"
       features={features}
     />
   )

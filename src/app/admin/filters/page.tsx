@@ -1,5 +1,4 @@
 import PlaceholderPage from '@/components/PlaceholderPage'
-import { Filter } from 'lucide-react'
 
 export default function FiltersPage() {
   const features = [
@@ -19,7 +18,7 @@ export default function FiltersPage() {
     <PlaceholderPage
       title="Data Filters"
       description="Create and manage advanced data filtering tools"
-      icon={Filter}
+      iconName="Filter"
       features={features}
     />
   )

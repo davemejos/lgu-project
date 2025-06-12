@@ -1,5 +1,4 @@
 import PlaceholderPage from '@/components/PlaceholderPage'
-import { Eye } from 'lucide-react'
 
 export default function MonitorPage() {
   const features = [
@@ -19,7 +18,7 @@ export default function MonitorPage() {
     <PlaceholderPage
       title="System Monitor"
       description="Monitor system performance and health in real-time"
-      icon={Eye}
+      iconName="Eye"
       features={features}
     />
   )

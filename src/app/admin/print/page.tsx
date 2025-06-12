@@ -1,5 +1,4 @@
 import PlaceholderPage from '@/components/PlaceholderPage'
-import { Printer } from 'lucide-react'
 
 export default function PrintPage() {
   const features = [
@@ -19,7 +18,7 @@ export default function PrintPage() {
     <PlaceholderPage
       title="Print Center"
       description="Manage printing services and document output"
-      icon={Printer}
+      iconName="Printer"
       features={features}
     />
   )

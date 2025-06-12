@@ -1,5 +1,4 @@
 import PlaceholderPage from '@/components/PlaceholderPage'
-import { MessageSquare } from 'lucide-react'
 
 export default function CommunicationsPage() {
   const features = [
@@ -19,7 +18,7 @@ export default function CommunicationsPage() {
     <PlaceholderPage
       title="Communications Center"
       description="Manage all external and internal communications"
-      icon={MessageSquare}
+      iconName="MessageSquare"
       features={features}
     />
   )

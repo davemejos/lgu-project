@@ -1,5 +1,4 @@
 import PlaceholderPage from '@/components/PlaceholderPage'
-import { Database } from 'lucide-react'
 
 export default function DatabasePage() {
   const features = [
@@ -19,7 +18,7 @@ export default function DatabasePage() {
     <PlaceholderPage
       title="Database Management"
       description="Monitor and manage database operations and performance"
-      icon={Database}
+      iconName="Database"
       features={features}
     />
   )

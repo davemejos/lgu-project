@@ -1,5 +1,4 @@
 import PlaceholderPage from '@/components/PlaceholderPage'
-import { Upload } from 'lucide-react'
 
 export default function ImportExportPage() {
   const features = [
@@ -19,7 +18,7 @@ export default function ImportExportPage() {
     <PlaceholderPage
       title="Import/Export"
       description="Manage data import and export operations"
-      icon={Upload}
+      iconName="Upload"
       features={features}
     />
   )

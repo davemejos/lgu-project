@@ -1,5 +1,4 @@
 import PlaceholderPage from '@/components/PlaceholderPage'
-import { Folder } from 'lucide-react'
 
 export default function FilesPage() {
   const features = [
@@ -19,7 +18,7 @@ export default function FilesPage() {
     <PlaceholderPage
       title="File Manager"
       description="Organize and manage all system files and documents"
-      icon={Folder}
+      iconName="Folder"
       features={features}
     />
   )

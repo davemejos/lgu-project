@@ -1,5 +1,4 @@
 import PlaceholderPage from '@/components/PlaceholderPage'
-import { Search } from 'lucide-react'
 
 export default function SearchPage() {
   const features = [
@@ -19,7 +18,7 @@ export default function SearchPage() {
     <PlaceholderPage
       title="Search Tools"
       description="Advanced search and data discovery tools"
-      icon={Search}
+      iconName="Search"
       features={features}
     />
   )

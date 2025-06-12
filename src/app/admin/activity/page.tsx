@@ -1,5 +1,4 @@
 import PlaceholderPage from '@/components/PlaceholderPage'
-import { Activity } from 'lucide-react'
 
 export default function ActivityPage() {
   const features = [
@@ -19,7 +18,7 @@ export default function ActivityPage() {
     <PlaceholderPage
       title="Activity Log"
       description="Monitor and track all system activities and user actions"
-      icon={Activity}
+      iconName="Activity"
       features={features}
     />
   )

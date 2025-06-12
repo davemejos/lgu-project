@@ -1,5 +1,4 @@
 import PlaceholderPage from '@/components/PlaceholderPage'
-import { Mail } from 'lucide-react'
 
 export default function MessagesPage() {
   const features = [
@@ -19,7 +18,7 @@ export default function MessagesPage() {
     <PlaceholderPage
       title="Internal Messages"
       description="Manage internal communication and messaging"
-      icon={Mail}
+      iconName="Mail"
       features={features}
     />
   )

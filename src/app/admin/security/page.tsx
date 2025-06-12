@@ -1,5 +1,4 @@
 import PlaceholderPage from '@/components/PlaceholderPage'
-import { Shield } from 'lucide-react'
 
 export default function SecurityPage() {
   const features = [
@@ -19,7 +18,7 @@ export default function SecurityPage() {
     <PlaceholderPage
       title="Security Management"
       description="Manage system security, access controls, and compliance"
-      icon={Shield}
+      iconName="Shield"
       features={features}
     />
   )

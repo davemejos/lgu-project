@@ -1,5 +1,4 @@
 import PlaceholderPage from '@/components/PlaceholderPage'
-import { Download } from 'lucide-react'
 
 export default function BackupPage() {
   const features = [
@@ -19,7 +18,7 @@ export default function BackupPage() {
     <PlaceholderPage
       title="Backup & Restore"
       description="Manage system backups and data recovery operations"
-      icon={Download}
+      iconName="Download"
       features={features}
     />
   )
