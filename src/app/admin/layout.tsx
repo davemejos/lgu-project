@@ -1,6 +1,7 @@
 'use client'
 
 import DashboardLayout from '@/components/Layout/DashboardLayout'
+import { AuthGuard } from '@/components/auth/AuthGuard'
 
 export default function AdminLayout({
   children,
@@ -8,8 +9,10 @@ export default function AdminLayout({
   children: React.ReactNode
 }) {
   return (
-    <DashboardLayout>
-      {children}
-    </DashboardLayout>
+    <AuthGuard requireAuth={true} redirectTo="/auth/login">
+      <DashboardLayout>
+        {children}
+      </DashboardLayout>
+    </AuthGuard>
   )
 }
