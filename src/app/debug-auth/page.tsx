@@ -3,11 +3,12 @@
 import { useAuth } from '@/components/providers/SupabaseAuthProvider'
 import { createClient } from '@/utils/supabase/client'
 import { useState, useEffect } from 'react'
+import type { Session, User } from '@supabase/supabase-js'
 
 export default function DebugAuthPage() {
   const { user, session, loading } = useAuth()
-  const [supabaseSession, setSupabaseSession] = useState<any>(null)
-  const [supabaseUser, setSupabaseUser] = useState<any>(null)
+  const [supabaseSession, setSupabaseSession] = useState<Session | null>(null)
+  const [supabaseUser, setSupabaseUser] = useState<User | null>(null)
   const [directLoading, setDirectLoading] = useState(true)
   
   const supabase = createClient()

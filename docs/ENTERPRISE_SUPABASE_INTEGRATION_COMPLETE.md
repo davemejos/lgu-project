@@ -104,7 +104,7 @@ Visit: `http://localhost:3001/test-supabase`
 ### **Authentication Security**
 - ✅ Password hashing with bcrypt
 - ✅ JWT token management
-- ✅ Session security with NextAuth
+- ✅ Session security with Supabase Auth
 - ✅ Environment variable protection
 
 ## 🚀 Production Deployment Ready

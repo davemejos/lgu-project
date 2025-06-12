@@ -628,21 +628,21 @@ export async function POST(request: NextRequest) {
 
 #### **✅ DO:**
 ```typescript
-// Protect API routes
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+// Protect API routes with Supabase Auth
+import { createClient } from '@/utils/supabase/server'
 
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions)
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  if (!session) {
+  if (!user) {
     return NextResponse.json(
       { success: false, error: 'Unauthorized' },
       { status: 401 }
     )
   }
 
-  if (!hasPermission(session.user, 'personnel:read')) {
+  if (!hasPermission(user, 'personnel:read')) {
     return NextResponse.json(
       { success: false, error: 'Forbidden' },
       { status: 403 }

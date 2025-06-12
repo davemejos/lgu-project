@@ -2,6 +2,45 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Tailwind CSS Optimization Layer */
+@layer base {
+  /* Ensure Tailwind base styles are always applied */
+  html {
+    -webkit-text-size-adjust: 100%;
+    font-feature-settings: normal;
+    font-variation-settings: normal;
+    tab-size: 4;
+  }
+
+  body {
+    margin: 0;
+    line-height: inherit;
+  }
+
+  /* Prevent FOUC (Flash of Unstyled Content) */
+  .tailwind-loading {
+    visibility: hidden;
+  }
+
+  .tailwind-loaded {
+    visibility: visible;
+  }
+}
+
+@layer components {
+  /* Force important utility classes to prevent disconnection */
+  .force-flex { @apply flex !important; }
+  .force-grid { @apply grid !important; }
+  .force-hidden { @apply hidden !important; }
+  .force-block { @apply block !important; }
+  .force-inline-block { @apply inline-block !important; }
+
+  /* Ensure critical layout classes are never purged */
+  .layout-container { @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8; }
+  .layout-grid { @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6; }
+  .layout-flex { @apply flex items-center justify-between; }
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -37,15 +76,104 @@ body {
   content-visibility: auto;
 }
 
-/* Custom form styles */
+/* Custom form styles with improved contrast */
 input[type="text"],
 input[type="email"],
 input[type="password"],
 input[type="date"],
+input[type="search"],
 textarea,
 select {
   @apply border border-gray-300 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #ffffff;
+  color: #1f2937; /* Dark gray text for better contrast */
+}
+
+/* Improved placeholder styling for better visibility */
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder,
+input[type="date"]::placeholder,
+input[type="search"]::placeholder,
+textarea::placeholder,
+select::placeholder {
+  color: #6b7280; /* Medium gray for better contrast than light gray */
+  opacity: 1; /* Ensure full opacity for better visibility */
+}
+
+/* Focus states with better contrast */
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="date"]:focus,
+input[type="search"]:focus,
+textarea:focus,
+select:focus {
+  background-color: #ffffff;
+  color: #111827; /* Even darker text on focus */
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Disabled state styling */
+input[type="text"]:disabled,
+input[type="email"]:disabled,
+input[type="password"]:disabled,
+input[type="date"]:disabled,
+input[type="search"]:disabled,
+textarea:disabled,
+select:disabled {
+  background-color: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+input[type="text"]:disabled::placeholder,
+input[type="email"]:disabled::placeholder,
+input[type="password"]:disabled::placeholder,
+input[type="date"]:disabled::placeholder,
+input[type="search"]:disabled::placeholder,
+textarea:disabled::placeholder,
+select:disabled::placeholder {
+  color: #9ca3af;
+}
+
+/* Utility classes for consistent input styling */
+.input-primary {
+  @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-600 transition-colors;
+}
+
+.input-search {
+  @apply w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-900 placeholder-gray-600 transition-colors;
+}
+
+.input-chat {
+  @apply flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-600 transition-colors;
+}
+
+/* Select dropdown styling */
+select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.5rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}
+
+/* Improved focus ring for better accessibility */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2;
+}
+
+/* Error state styling */
+.input-error {
+  @apply border-red-300 focus:border-red-500 focus:ring-red-500;
+}
+
+/* Success state styling */
+.input-success {
+  @apply border-green-300 focus:border-green-500 focus:ring-green-500;
 }
 
 /* Professional gradient backgrounds */
