@@ -22,9 +22,9 @@ Your Next.js 15 application builds successfully locally but shows a 404 error on
 - ✅ Improved environment variable validation
 
 ### **4. Vercel Configuration**
-- ✅ Created `vercel.json` with proper Next.js settings
-- ✅ Added security headers
-- ✅ Configured API routes properly
+- ✅ Removed problematic `vercel.json` file (Next.js auto-detection works better)
+- ✅ Fixed "Function Runtimes must have a valid version" error
+- ✅ Simplified deployment configuration
 
 ### **5. Build Process Fixes**
 - ✅ Fixed Windows-specific build cache issues
@@ -68,6 +68,9 @@ This page will show:
 
 #### **Issue: Build Succeeds but Runtime Fails**
 **Solution:** Check Vercel function logs for runtime errors
+
+#### **Issue: "Function Runtimes must have a valid version" Error**
+**Solution:** Remove `vercel.json` file - Next.js projects don't need it on Vercel
 
 ## 🚀 Deployment Commands
 
