@@ -5,6 +5,8 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { X, User, Briefcase, Heart } from 'lucide-react'
+import CloudinaryUploadWidget, { CloudinaryUploadResult } from '@/components/CloudinaryUploadWidget'
+import { CloudinaryImagePresets } from '@/components/CloudinaryImage'
 
 const personnelSchema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -71,6 +73,8 @@ export default function PersonnelModal({ isOpen, onClose, onSave, personnel, mod
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState('personal')
+  const [profilePhotoUrl, setProfilePhotoUrl] = useState<string>('')
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
 
   const {
     register,
@@ -104,6 +108,7 @@ export default function PersonnelModal({ isOpen, onClose, onSave, personnel, mod
           emergencyContact: personnel.emergencyContact || '',
           childrenNames: personnel.childrenNames || '',
         })
+        setProfilePhotoUrl(personnel.profilePhoto || '')
       } else {
         reset({
           name: '',
@@ -121,11 +126,31 @@ export default function PersonnelModal({ isOpen, onClose, onSave, personnel, mod
           emergencyContact: '',
           childrenNames: '',
         })
+        setProfilePhotoUrl('')
       }
       setError('')
       setActiveTab('personal')
+      setIsUploadingPhoto(false)
     }
   }, [isOpen, mode, personnel, reset])
+
+  /**
+   * Handle profile photo upload success
+   */
+  const handlePhotoUploadSuccess = (result: CloudinaryUploadResult) => {
+    console.log('Profile photo uploaded:', result)
+    setProfilePhotoUrl(result.info.secure_url)
+    setIsUploadingPhoto(false)
+  }
+
+  /**
+   * Handle profile photo upload error
+   */
+  const handlePhotoUploadError = (error: { message?: string }) => {
+    console.error('Profile photo upload failed:', error)
+    setIsUploadingPhoto(false)
+    setError('Failed to upload profile photo. Please try again.')
+  }
 
   const onSubmit = async (data: PersonnelForm) => {
     setIsLoading(true)
@@ -135,12 +160,18 @@ export default function PersonnelModal({ isOpen, onClose, onSave, personnel, mod
       const url = mode === 'create' ? '/api/personnel' : `/api/personnel/${personnel?.id}`
       const method = mode === 'create' ? 'POST' : 'PUT'
 
+      // Include profile photo URL in the data
+      const submitData = {
+        ...data,
+        profilePhoto: profilePhotoUrl
+      }
+
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(data)
+        body: JSON.stringify(submitData)
       })
 
       if (response.ok) {
@@ -223,6 +254,49 @@ export default function PersonnelModal({ isOpen, onClose, onSave, personnel, mod
               {/* Personal Information Tab */}
               {activeTab === 'personal' && (
                 <div className="space-y-6">
+                  {/* Profile Photo Section */}
+                  <div className="flex flex-col items-center space-y-4 p-6 bg-gray-50 rounded-lg">
+                    <div className="relative">
+                      {profilePhotoUrl ? (
+                        <CloudinaryImagePresets.Profile
+                          src={profilePhotoUrl}
+                          alt="Profile Photo"
+                          size={120}
+                          className="ring-4 ring-white shadow-lg"
+                        />
+                      ) : (
+                        <div className="h-30 w-30 rounded-full bg-gray-200 flex items-center justify-center ring-4 ring-white shadow-lg">
+                          <User className="h-12 w-12 text-gray-400" />
+                        </div>
+                      )}
+                      <div className="absolute bottom-0 right-0">
+                        <CloudinaryUploadWidget
+                          onUploadSuccess={handlePhotoUploadSuccess}
+                          onUploadError={handlePhotoUploadError}
+                          onOpen={() => setIsUploadingPhoto(true)}
+                          onClose={() => setIsUploadingPhoto(false)}
+                          folder="lgu-uploads/personnel"
+                          acceptedFileTypes={['image/*']}
+                          multiple={false}
+                          maxFiles={1}
+                          cropping={true}
+                          croppingAspectRatio={1}
+                          buttonText=""
+                          variant="primary"
+                          size="sm"
+                          className="h-8 w-8 rounded-full bg-blue-600 text-white hover:bg-blue-700 flex items-center justify-center shadow-lg transition-colors disabled:opacity-50"
+                          disabled={isUploadingPhoto}
+                        />
+                      </div>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-gray-700">Profile Photo</p>
+                      <p className="text-xs text-gray-500">
+                        {isUploadingPhoto ? 'Uploading...' : 'Click camera icon to upload'}
+                      </p>
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">

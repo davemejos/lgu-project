@@ -56,7 +56,7 @@ export default function ChatInterface({ isOpen, onClose, onMinimize }: ChatInter
     if (!inputMessage.trim() || isLoading) return;
 
     const userMessage: ChatMessageType = {
-      id: Date.now().toString(),
+      id: `user-${Math.random().toString(36).substr(2, 9)}`,
       role: 'user',
       content: inputMessage.trim(),
       timestamp: new Date(),
@@ -82,7 +82,7 @@ export default function ChatInterface({ isOpen, onClose, onMinimize }: ChatInter
 
       if (data.success) {
         const assistantMessage: ChatMessageType = {
-          id: (Date.now() + 1).toString(),
+          id: `assistant-${Math.random().toString(36).substr(2, 9)}`,
           role: 'assistant',
           content: data.message,
           timestamp: new Date(),

@@ -59,7 +59,7 @@ export default function ChatBot() {
     if (!inputMessage.trim() || isLoading) return;
 
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: `user-${Math.random().toString(36).substr(2, 9)}`,
       role: 'user',
       content: inputMessage.trim(),
       timestamp: new Date(),
@@ -85,7 +85,7 @@ export default function ChatBot() {
 
       if (data.success) {
         const assistantMessage: Message = {
-          id: (Date.now() + 1).toString(),
+          id: `assistant-${Math.random().toString(36).substr(2, 9)}`,
           role: 'assistant',
           content: data.message,
           timestamp: new Date(),

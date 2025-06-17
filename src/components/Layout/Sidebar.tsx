@@ -65,6 +65,7 @@ const navigation = [
   { name: 'Search Tools', href: '/admin/search', icon: Search },
   { name: 'Data Filters', href: '/admin/filters', icon: Filter },
   { name: 'Security', href: '/admin/security', icon: Shield },
+  { name: 'Email Test', href: '/admin/email-test', icon: Mail },
   { name: 'Settings', href: '/admin/settings', icon: Settings },
 ]
 

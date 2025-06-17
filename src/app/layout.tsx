@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { ReduxProvider } from '@/components/providers/ReduxProvider';
 import { SupabaseAuthProvider } from '@/components/providers/SupabaseAuthProvider';
+import RealtimeMediaProvider from '@/components/providers/RealtimeMediaProvider';
+import SyncStatusProvider from '@/components/providers/SyncStatusProvider';
 import ChatBot from '@/components/chatbot/ChatBot';
 
 const geistSans = Geist({
@@ -29,10 +32,16 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SupabaseAuthProvider>
-          {children}
-          <ChatBot />
-        </SupabaseAuthProvider>
+        <ReduxProvider>
+          <SupabaseAuthProvider>
+            <RealtimeMediaProvider>
+              <SyncStatusProvider>
+                {children}
+                <ChatBot />
+              </SyncStatusProvider>
+            </RealtimeMediaProvider>
+          </SupabaseAuthProvider>
+        </ReduxProvider>
       </body>
     </html>
   );
