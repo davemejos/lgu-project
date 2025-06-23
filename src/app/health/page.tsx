@@ -67,19 +67,19 @@ export default function HealthPage() {
               <div className="space-y-2">
                 <Link
                   href="/"
-                  className="block p-3 bg-blue-50 hover:bg-blue-100 rounded transition-colors"
+                  className="block p-3 bg-blue-50 rounded border border-blue-200"
                 >
                   → Go to Home Page
                 </Link>
                 <Link
                   href="/admin"
-                  className="block p-3 bg-blue-50 hover:bg-blue-100 rounded transition-colors"
+                  className="block p-3 bg-blue-50 rounded border border-blue-200"
                 >
                   → Go to Admin Panel
                 </Link>
                 <Link
                   href="/auth/login"
-                  className="block p-3 bg-blue-50 hover:bg-blue-100 rounded transition-colors"
+                  className="block p-3 bg-blue-50 rounded border border-blue-200"
                 >
                   → Go to Login Page
                 </Link>

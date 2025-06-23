@@ -1,6 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic'
 import NextImage from 'next/image'
 import { Camera, Image, Video, Upload, Download, Trash2, Search, Grid, List, RefreshCw } from 'lucide-react'
 

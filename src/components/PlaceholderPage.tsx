@@ -25,23 +25,37 @@ interface PlaceholderPageProps {
 }
 
 const getIcon = (iconName: string) => {
-  const iconMap = {
-    Activity,
-    Archive,
-    Database,
-    Download,
-    Eye,
-    Filter,
-    Folder,
-    Mail,
-    MessageSquare,
-    Printer,
-    Search,
-    Shield,
-    Upload
+  // Use a switch statement instead of dynamic object lookup for better static analysis
+  switch (iconName) {
+    case 'Activity':
+      return Activity
+    case 'Archive':
+      return Archive
+    case 'Database':
+      return Database
+    case 'Download':
+      return Download
+    case 'Eye':
+      return Eye
+    case 'Filter':
+      return Filter
+    case 'Folder':
+      return Folder
+    case 'Mail':
+      return Mail
+    case 'MessageSquare':
+      return MessageSquare
+    case 'Printer':
+      return Printer
+    case 'Search':
+      return Search
+    case 'Shield':
+      return Shield
+    case 'Upload':
+      return Upload
+    default:
+      return Activity
   }
-
-  return iconMap[iconName as keyof typeof iconMap] || Activity
 }
 
 export default function PlaceholderPage({
@@ -51,7 +65,11 @@ export default function PlaceholderPage({
   features,
   comingSoon = true
 }: PlaceholderPageProps) {
-  const Icon = getIcon(iconName)
+  // Use a more static-friendly approach for icon rendering
+  const renderIcon = (className: string) => {
+    const Icon = getIcon(iconName)
+    return <Icon className={className} />
+  }
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -63,7 +81,7 @@ export default function PlaceholderPage({
           </div>
           <div className="hidden lg:block">
             <div className="h-20 w-20 bg-white/20 rounded-2xl flex items-center justify-center">
-              <Icon className="h-10 w-10 text-white" />
+              {renderIcon("h-10 w-10 text-white")}
             </div>
           </div>
         </div>
@@ -74,7 +92,7 @@ export default function PlaceholderPage({
         <div className="bg-blue-50 border border-blue-200 rounded-2xl p-6">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-blue-100 rounded-lg">
-              <Icon className="h-6 w-6 text-blue-600" />
+              {renderIcon("h-6 w-6 text-blue-600")}
             </div>
             <div>
               <h3 className="text-lg font-semibold text-blue-900">Coming Soon</h3>

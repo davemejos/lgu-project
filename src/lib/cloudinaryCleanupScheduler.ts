@@ -304,18 +304,6 @@ export class CloudinaryCleanupScheduler {
 export const getCleanupScheduler = (config?: Partial<CleanupSchedulerConfig>) => 
   CloudinaryCleanupScheduler.getInstance(config)
 
-// Auto-start scheduler in production (server-side only)
-if (typeof window === 'undefined' && process.env.NODE_ENV === 'production') {
-  const scheduler = getCleanupScheduler({
-    enabled: true,
-    interval_minutes: 5,
-    auto_start: true
-  })
-  
-  if (scheduler.getConfig().auto_start) {
-    setTimeout(() => {
-      scheduler.start()
-      console.log('[CloudinaryCleanupScheduler] Auto-started in production mode')
-    }, 10000) // Start after 10 seconds to allow app initialization
-  }
-}
+// Note: Auto-start is disabled to prevent issues during build time
+// The scheduler should be started manually via API calls or in the admin interface
+// This ensures it only runs when the application is fully initialized and running

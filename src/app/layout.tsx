@@ -7,6 +7,7 @@ import { SupabaseAuthProvider } from '@/components/providers/SupabaseAuthProvide
 
 import ChatBot from '@/components/chatbot/ChatBot';
 import CloudinarySchedulerInit from '@/components/CloudinarySchedulerInit';
+import ClientOnly from '@/components/ClientOnly';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -36,8 +37,10 @@ export default function RootLayout({
         <ReduxProvider>
           <SupabaseAuthProvider>
             {children}
-            <ChatBot />
-            <CloudinarySchedulerInit />
+            <ClientOnly>
+              <ChatBot />
+              <CloudinarySchedulerInit />
+            </ClientOnly>
           </SupabaseAuthProvider>
         </ReduxProvider>
       </body>

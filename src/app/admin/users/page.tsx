@@ -1,5 +1,8 @@
 'use client'
 
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic'
+
 import { useEffect, useState, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react'

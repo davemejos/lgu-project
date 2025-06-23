@@ -6,6 +6,9 @@
 
 'use client'
 
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic'
+
 import { useEffect } from 'react'
 import { useAuth, usePersonnel, useUI, useSettings } from '@/lib/redux/hooks'
 

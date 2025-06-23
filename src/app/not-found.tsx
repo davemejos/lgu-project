@@ -1,3 +1,8 @@
+'use client'
+
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic'
+
 import Link from 'next/link'
 import { Home, ArrowLeft, Fish } from 'lucide-react'
 

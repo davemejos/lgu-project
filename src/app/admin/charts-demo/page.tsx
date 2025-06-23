@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { LineChart, BarChart, PieChart, ChartWrapper } from '@/components/charts'
 import { TrendingUp, BarChart3, PieChart as PieChartIcon, Zap } from 'lucide-react'
+import ClientOnly from '@/components/ClientOnly'
 
 const ChartsDemoPage = () => {
   const [loading, setLoading] = useState(false)
@@ -97,12 +98,14 @@ const ChartsDemoPage = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-900">Interactive Demo</h2>
-            <button
-              onClick={toggleLoading}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
-            >
-              Test Loading State
-            </button>
+            <ClientOnly>
+              <button
+                onClick={toggleLoading}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors"
+              >
+                Test Loading State
+              </button>
+            </ClientOnly>
           </div>
         </div>
 
@@ -114,14 +117,16 @@ const ChartsDemoPage = () => {
               <TrendingUp className="h-5 w-5 text-blue-600" />
               <h3 className="text-lg font-semibold text-gray-900">Line Chart Component</h3>
             </div>
-            <LineChart
-              title="Sales Performance"
-              xAxisData={salesData.months}
-              series={salesData.series}
-              height="350px"
-              smooth={true}
-              showArea={true}
-            />
+            <ClientOnly>
+              <LineChart
+                title="Sales Performance"
+                xAxisData={salesData.months}
+                series={salesData.series}
+                height="350px"
+                smooth={true}
+                showArea={true}
+              />
+            </ClientOnly>
           </div>
 
           {/* Bar Chart */}
@@ -130,13 +135,15 @@ const ChartsDemoPage = () => {
               <BarChart3 className="h-5 w-5 text-green-600" />
               <h3 className="text-lg font-semibold text-gray-900">Bar Chart Component</h3>
             </div>
-            <BarChart
-              title="Quarterly Performance"
-              xAxisData={performanceData.categories}
-              series={performanceData.series}
-              height="350px"
-              stacked={false}
-            />
+            <ClientOnly>
+              <BarChart
+                title="Quarterly Performance"
+                xAxisData={performanceData.categories}
+                series={performanceData.series}
+                height="350px"
+                stacked={false}
+              />
+            </ClientOnly>
           </div>
         </div>
 
@@ -147,14 +154,16 @@ const ChartsDemoPage = () => {
               <PieChartIcon className="h-5 w-5 text-purple-600" />
               <h3 className="text-lg font-semibold text-gray-900">Pie Chart Component</h3>
             </div>
-            <PieChart
-              title="Department Distribution"
-              data={departmentData}
-              height="350px"
-              donut={true}
-              showLegend={true}
-              legendPosition="bottom"
-            />
+            <ClientOnly>
+              <PieChart
+                title="Department Distribution"
+                data={departmentData}
+                height="350px"
+                donut={true}
+                showLegend={true}
+                legendPosition="bottom"
+              />
+            </ClientOnly>
           </div>
 
           {/* Custom Chart with ChartWrapper */}
@@ -163,12 +172,14 @@ const ChartsDemoPage = () => {
               <Zap className="h-5 w-5 text-orange-600" />
               <h3 className="text-lg font-semibold text-gray-900">Custom Chart Wrapper</h3>
             </div>
-            <ChartWrapper
-              option={customChartOption}
-              height="350px"
-              loading={loading}
-              className="border border-gray-100 rounded-lg"
-            />
+            <ClientOnly>
+              <ChartWrapper
+                option={customChartOption}
+                height="350px"
+                loading={loading}
+                className="border border-gray-100 rounded-lg"
+              />
+            </ClientOnly>
           </div>
         </div>
 

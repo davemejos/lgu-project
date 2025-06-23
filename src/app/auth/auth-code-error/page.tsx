@@ -1,9 +1,14 @@
 /**
  * Authentication Error Page
- * 
+ *
  * This page is shown when there's an error with email confirmation
  * or other authentication processes.
  */
+
+'use client'
+
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic'
 
 import Link from 'next/link'
 

@@ -1,5 +1,8 @@
 'use client'
 
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic'
+
 import { useState, useEffect, useCallback } from 'react'
 import { Upload, Database, RefreshCw, Image, CheckCircle, AlertCircle } from 'lucide-react'
 import NextImage from 'next/image'

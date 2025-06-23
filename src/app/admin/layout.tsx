@@ -1,18 +1,13 @@
-'use client'
+// Force dynamic rendering for all admin routes
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
-import DashboardLayout from '@/components/Layout/DashboardLayout'
-import { AuthGuard } from '@/components/auth/AuthGuard'
+import AdminLayoutClient from './layout-client'
 
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  return (
-    <AuthGuard requireAuth={true} redirectTo="/auth/login">
-      <DashboardLayout>
-        {children}
-      </DashboardLayout>
-    </AuthGuard>
-  )
+  return <AdminLayoutClient>{children}</AdminLayoutClient>
 }
