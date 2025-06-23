@@ -12,14 +12,14 @@
  * - 🔍 Comprehensive audit trail
  * - ⚡ Batch processing for performance
  * - 🚨 Error recovery and notifications
- * - 📱 Webhook integration ready
+ * - 🔄 Direct API integration
  * 
  * @author LGU Project Team
  * @version 1.0.0
  */
 
 import { SupabaseMediaService, MediaAsset } from './supabaseMediaService'
-import { SyncStatusManager } from './syncStatusManager'
+
 
 // Server-side Cloudinary import
 let cloudinary: typeof import('cloudinary').v2 | null = null
@@ -295,23 +295,9 @@ export class BidirectionalSyncService {
     try {
       console.log('[BidirectionalSyncService] Starting full bidirectional sync...')
 
-      // Phase 3: Create sync operation with real-time tracking
-      operationId = await SyncStatusManager.createSyncOperation({
-        operation_type: 'full_sync',
-        triggered_by: 'admin',
-        source: 'manual',
-        operation_data: {
-          sync_type: 'full',
-          options: {
-            force: options.force,
-            batch_size: options.batch_size,
-            max_retries: options.max_retries,
-            include_deleted: options.include_deleted,
-            folder_filter: options.folder_filter,
-            resource_type_filter: options.resource_type_filter
-          }
-        }
-      })
+      // Generate operation ID for tracking
+      operationId = `sync_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      console.log(`[BidirectionalSyncService] Starting sync operation: ${operationId}`)
 
       // Log sync start (legacy)
       await SupabaseMediaService.logSyncOperation({
@@ -322,26 +308,20 @@ export class BidirectionalSyncService {
         operation_data: { sync_type: 'full', options, operation_id: operationId }
       })
 
-      // Phase 3: Update progress - Step 1
-      if (operationId) {
-        await SyncStatusManager.updateSyncProgress(operationId, 10, 0, 0, 'Starting Cloudinary → Database sync')
-      }
+      // Step 1: Starting Cloudinary → Database sync
+      console.log(`[BidirectionalSyncService] ${operationId}: Starting Cloudinary → Database sync`)
 
       // Step 1: Sync from Cloudinary to Database
       const cloudinaryToDbResult = await this.syncCloudinaryToDatabase(options, operationId)
 
-      // Phase 3: Update progress - Step 2
-      if (operationId) {
-        await SyncStatusManager.updateSyncProgress(operationId, 60, cloudinaryToDbResult.synced_items, 0, 'Starting Database → Cloudinary sync')
-      }
+      // Step 2: Starting Database → Cloudinary sync
+      console.log(`[BidirectionalSyncService] ${operationId}: Starting Database → Cloudinary sync (${cloudinaryToDbResult.synced_items} items synced so far)`)
 
       // Step 2: Sync from Database to Cloudinary (handle pending operations)
       const dbToCloudinaryResult = await this.syncDatabaseToCloudinary(options, operationId)
 
-      // Phase 3: Update progress - Step 3
-      if (operationId) {
-        await SyncStatusManager.updateSyncProgress(operationId, 90, cloudinaryToDbResult.synced_items + dbToCloudinaryResult.synced_items, 0, 'Cleaning up orphaned records')
-      }
+      // Step 3: Cleaning up orphaned records
+      console.log(`[BidirectionalSyncService] ${operationId}: Cleaning up orphaned records (${cloudinaryToDbResult.synced_items + dbToCloudinaryResult.synced_items} items synced so far)`)
 
       // Step 3: Clean up orphaned records
       const cleanupResult = await this.cleanupOrphanedRecords()
@@ -357,15 +337,8 @@ export class BidirectionalSyncService {
         last_cursor: cloudinaryToDbResult.last_cursor
       }
 
-      // Phase 3: Complete sync operation with real-time status
-      if (operationId) {
-        await SyncStatusManager.completeSyncOperation(
-          operationId,
-          result.success ? 'completed' : 'failed',
-          result.errors.length > 0 ? { errors: result.errors } : undefined,
-          `Sync ${result.success ? 'completed' : 'failed'}: ${result.synced_items} synced, ${result.updated_items} updated, ${result.deleted_items} deleted`
-        )
-      }
+      // Complete sync operation
+      console.log(`[BidirectionalSyncService] ${operationId}: Sync ${result.success ? 'completed' : 'failed'}: ${result.synced_items} synced, ${result.updated_items} updated, ${result.deleted_items} deleted`)
 
       // Log sync completion (legacy)
       await SupabaseMediaService.logSyncOperation({
@@ -831,159 +804,7 @@ export class BidirectionalSyncService {
     }
   }
 
-  /**
-   * Handle webhook from Cloudinary
-   */
-  static async handleCloudinaryWebhook(webhookData: Record<string, unknown>): Promise<void> {
-    try {
-      console.log('[BidirectionalSyncService] Processing Cloudinary webhook:', webhookData)
 
-      const notification_type = webhookData.notification_type as string
-
-      // Handle different webhook payload structures
-      let public_id: string | undefined
-      let resources: Array<{ public_id: string; resource_type: string }> = []
-
-      if (notification_type === 'delete' && webhookData.resources) {
-        // Delete webhooks have resources array
-        resources = webhookData.resources as Array<{ public_id: string; resource_type: string }>
-        public_id = resources[0]?.public_id
-      } else {
-        // Upload/update webhooks have direct public_id
-        public_id = webhookData.public_id as string
-      }
-
-      // Ensure we have a public_id for logging
-      const logPublicId = public_id || 'UNKNOWN'
-
-      // Log webhook received
-      await SupabaseMediaService.logSyncOperation({
-        operation: this.mapWebhookToOperation(notification_type),
-        status: 'pending',
-        cloudinary_public_id: logPublicId,
-        source: 'webhook',
-        webhook_data: webhookData
-      })
-
-      switch (notification_type) {
-        case 'upload':
-        case 'update':
-          if (public_id) {
-            await this.handleWebhookUploadUpdate(webhookData)
-          } else {
-            throw new Error('No public_id found for upload/update webhook')
-          }
-          break
-        case 'delete':
-          if (resources.length > 0) {
-            await this.handleWebhookDeleteMultiple(resources)
-          } else if (public_id) {
-            await this.handleWebhookDelete(public_id)
-          } else {
-            throw new Error('No resources or public_id found for delete webhook')
-          }
-          break
-        default:
-          console.log(`[BidirectionalSyncService] Unhandled webhook type: ${notification_type}`)
-      }
-
-    } catch (error) {
-      console.error('[BidirectionalSyncService] Webhook processing failed:', error)
-      throw error
-    }
-  }
-
-  /**
-   * Map webhook notification type to operation
-   */
-  static mapWebhookToOperation(notificationType: string | undefined): 'upload' | 'delete' | 'update' | 'restore' {
-    switch (notificationType) {
-      case 'upload': return 'upload'
-      case 'delete': return 'delete'
-      case 'update': return 'update'
-      default: return 'update'
-    }
-  }
-
-  /**
-   * Handle webhook upload/update
-   */
-  private static async handleWebhookUploadUpdate(webhookData: Record<string, unknown>): Promise<void> {
-    try {
-      // Use webhook data directly instead of fetching from Cloudinary API
-      // This is more efficient and avoids 404 errors for recently uploaded assets
-
-      // Transform webhook data to match Cloudinary resource format
-      const resource = {
-        public_id: webhookData.public_id as string,
-        version: webhookData.version as number,
-        signature: webhookData.etag as string || '',
-        width: webhookData.width as number,
-        height: webhookData.height as number,
-        format: webhookData.format as string,
-        resource_type: webhookData.resource_type as string,
-        created_at: webhookData.created_at as string,
-        bytes: webhookData.bytes as number,
-        type: webhookData.type as string,
-        etag: webhookData.etag as string,
-        url: webhookData.url as string,
-        secure_url: webhookData.secure_url as string,
-        folder: webhookData.asset_folder as string || '',
-        display_name: webhookData.display_name as string,
-        original_filename: webhookData.original_filename as string,
-        tags: (webhookData.tags as string[]) || []
-      }
-
-      // Sync to database
-      await this.syncSingleResourceToDatabase(resource)
-
-      console.log(`[BidirectionalSyncService] Webhook sync completed for: ${webhookData.public_id}`)
-    } catch (error) {
-      console.error('[BidirectionalSyncService] Webhook upload/update failed:', error)
-      throw error
-    }
-  }
-
-  /**
-   * Handle webhook delete for single asset
-   */
-  private static async handleWebhookDelete(publicId: string): Promise<void> {
-    try {
-      // HARD DELETE from database when deleted from Cloudinary
-      console.log(`[BidirectionalSyncService] 🗑️ HARD DELETING from database: ${publicId}`)
-      await SupabaseMediaService.hardDeleteMediaAsset(publicId)
-
-      console.log(`[BidirectionalSyncService] ✅ Webhook delete completed for: ${publicId}`)
-    } catch (error) {
-      console.error('[BidirectionalSyncService] ❌ Webhook delete failed:', error)
-      throw error
-    }
-  }
-
-  /**
-   * Handle webhook delete for multiple assets
-   */
-  private static async handleWebhookDeleteMultiple(resources: Array<{ public_id: string; resource_type: string }>): Promise<void> {
-    try {
-      console.log(`[BidirectionalSyncService] 🗑️ Processing HARD DELETE webhook for ${resources.length} assets`)
-
-      for (const resource of resources) {
-        try {
-          console.log(`[BidirectionalSyncService] 🗑️ HARD DELETING: ${resource.public_id}`)
-          await SupabaseMediaService.hardDeleteMediaAsset(resource.public_id)
-          console.log(`[BidirectionalSyncService] ✅ Deleted asset: ${resource.public_id}`)
-        } catch (error) {
-          console.error(`[BidirectionalSyncService] ❌ Failed to delete asset ${resource.public_id}:`, error)
-          // Continue with other assets even if one fails
-        }
-      }
-
-      console.log(`[BidirectionalSyncService] ✅ Webhook delete completed for ${resources.length} assets`)
-    } catch (error) {
-      console.error('[BidirectionalSyncService] ❌ Webhook delete multiple failed:', error)
-      throw error
-    }
-  }
 
 
 }

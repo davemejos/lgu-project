@@ -3,9 +3,10 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ReduxProvider } from '@/components/providers/ReduxProvider';
 import { SupabaseAuthProvider } from '@/components/providers/SupabaseAuthProvider';
-import RealtimeMediaProvider from '@/components/providers/RealtimeMediaProvider';
-import SyncStatusProvider from '@/components/providers/SyncStatusProvider';
+
+
 import ChatBot from '@/components/chatbot/ChatBot';
+import CloudinarySchedulerInit from '@/components/CloudinarySchedulerInit';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,12 +35,9 @@ export default function RootLayout({
       >
         <ReduxProvider>
           <SupabaseAuthProvider>
-            <RealtimeMediaProvider>
-              <SyncStatusProvider>
-                {children}
-                <ChatBot />
-              </SyncStatusProvider>
-            </RealtimeMediaProvider>
+            {children}
+            <ChatBot />
+            <CloudinarySchedulerInit />
           </SupabaseAuthProvider>
         </ReduxProvider>
       </body>

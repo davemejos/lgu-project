@@ -43,14 +43,14 @@ Error: Upload failed - Invalid credentials
 - Check upload preset configuration
 - Ensure file size is within limits
 
-#### **3. Webhook Not Receiving Events**
+#### **3. Sync Not Working**
 ```bash
-Warning: No webhook events received
+Warning: Manual sync failed
 ```
 **Solution:**
-- Check webhook URL configuration in Cloudinary
-- Verify ngrok is running (development)
-- Test webhook endpoint manually
+- Check Cloudinary API credentials
+- Verify database connectivity
+- Test sync endpoint manually
 
 #### **4. Real-time Updates Not Working**
 ```bash
@@ -68,8 +68,8 @@ Error: WebSocket connection failed
 # Check database connectivity
 curl -X GET "http://localhost:3000/api/setup-media-db"
 
-# Check webhook configuration
-curl -X GET "http://localhost:3000/api/cloudinary/webhook"
+# Check sync functionality
+curl -X POST "http://localhost:3000/api/cloudinary/sync"
 
 # Check sync status
 curl -X GET "http://localhost:3000/api/sync/status"

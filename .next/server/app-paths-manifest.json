@@ -1,13 +1,6 @@
 {
   "/favicon.ico/route": "app/favicon.ico/route.js",
-  "/api/personnel/route": "app/api/personnel/route.js",
-  "/api/cloudinary/media/route": "app/api/cloudinary/media/route.js",
-  "/api/setup-media-db/route": "app/api/setup-media-db/route.js",
-  "/api/cloudinary/upload/route": "app/api/cloudinary/upload/route.js",
-  "/api/webhooks/cloudinary/route": "app/api/webhooks/cloudinary/route.js",
-  "/api/cloudinary/webhook/route": "app/api/cloudinary/webhook/route.js",
-  "/page": "app/page.js",
-  "/auth/login/page": "app/auth/login/page.js",
-  "/admin/page": "app/admin/page.js",
-  "/admin/media/page": "app/admin/media/page.js"
+  "/api/cloudinary/scheduler/route": "app/api/cloudinary/scheduler/route.js",
+  "/api/cloudinary/sync-fix/route": "app/api/cloudinary/sync-fix/route.js",
+  "/page": "app/page.js"
 }

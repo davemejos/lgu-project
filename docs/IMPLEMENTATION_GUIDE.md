@@ -18,14 +18,11 @@ NEXT_PUBLIC_SUPABASE_URL=https://lkolpgpmdculqqfqyzaf.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ```
 
-### **3. Webhook Configuration**
-1. Go to [Cloudinary Console](https://console.cloudinary.com)
-2. Navigate to Settings → Webhooks
-3. Add new webhook:
-   - **URL**: `https://yourdomain.com/api/cloudinary/webhook`
-   - **Events**: `upload`, `delete`, `update`
-   - **Format**: JSON
-   - **Signature**: Enabled
+### **3. No Webhook Configuration Needed**
+Your Cloudinary integration works without webhooks:
+- Direct database sync during uploads
+- Manual sync available via `/api/cloudinary/sync`
+- Real-time UI updates via Supabase subscriptions
 
 ### **4. Initial Sync**
 ```bash
@@ -98,17 +95,13 @@ const result = await response.json()
 console.log('Sync result:', result)
 ```
 
-### **4. Test Webhook**
+### **4. Test Manual Sync**
 ```bash
-# Simulate Cloudinary webhook (for testing)
-curl -X POST http://localhost:3000/api/cloudinary/webhook \
+# Test manual sync for specific asset
+curl -X POST http://localhost:3000/api/cloudinary/sync \
   -H "Content-Type: application/json" \
-  -H "x-cld-signature: test_signature" \
-  -H "x-cld-timestamp: $(date +%s)" \
   -d '{
-    "notification_type": "upload",
-    "public_id": "test_upload",
-    "resource_type": "image"
+    "single_asset": "your_public_id_here"
   }'
 ```
 

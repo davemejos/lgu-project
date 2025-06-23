@@ -7,7 +7,7 @@
  * between Cloudinary, Custom Media Library, and Supabase database.
  */
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Upload, CheckCircle, AlertCircle, RefreshCw, Database, Cloud, Eye } from 'lucide-react'
 
 interface TestResult {
@@ -325,16 +325,16 @@ export default function IntegrationTestPage() {
                   </div>
                 </div>
                 
-                {test.details && (
+                {test.details ? (
                   <details className="mt-3">
                     <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
                       View Details
                     </summary>
                     <pre className="mt-2 p-3 bg-gray-100 rounded text-xs overflow-auto">
-                      {JSON.stringify(test.details, null, 2)}
+                      {typeof test.details === 'string' ? test.details : JSON.stringify(test.details, null, 2)}
                     </pre>
                   </details>
-                )}
+                ) : null}
               </div>
             ))}
           </div>

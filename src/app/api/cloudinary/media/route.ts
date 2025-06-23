@@ -7,8 +7,8 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { SupabaseMediaService } from '@/lib/supabaseMediaService'
-import { BidirectionalSyncService } from '@/lib/bidirectionalSyncService'
-import { cloudinary, deleteFromCloudinary } from '@/lib/cloudinary'
+import { cloudinary } from '@/lib/cloudinary'
+// Removed unused imports - BidirectionalSyncService and deleteFromCloudinary
 
 /**
  * GET /api/cloudinary/media
@@ -247,7 +247,13 @@ export async function DELETE(request: NextRequest) {
 
     const results = {
       deleted: [] as string[],
-      failed: [] as { public_id: string, error: string }[]
+      failed: [] as {
+        public_id: string,
+        error: string,
+        cloudinary_success?: boolean,
+        database_success?: boolean,
+        cloudinary_error?: string
+      }[]
     }
 
     // Process each deletion - DELETE FROM BOTH CLOUDINARY AND DATABASE
@@ -276,25 +282,43 @@ export async function DELETE(request: NextRequest) {
           }
 
           // Get the resource type from the database asset
-          const resourceType = asset?.resource_type || 'image'
-          console.log(`[Cloudinary Media API] Using resource type: ${resourceType}`)
+          const rawResourceType = asset?.resource_type || 'image'
+          console.log(`[Cloudinary Media API] Using resource type: ${rawResourceType}`)
 
           let cloudinaryResult
 
           // Try with the known resource type first
           try {
+            // Ensure we use a valid Cloudinary resource type
+            const destroyResourceType: 'image' | 'video' | 'raw' =
+              rawResourceType === 'video' ? 'video' :
+              rawResourceType === 'raw' ? 'raw' : 'image'
+
             cloudinaryResult = await cloudinary.uploader.destroy(publicId, {
-              resource_type: resourceType === 'auto' ? 'image' : resourceType,
+              resource_type: destroyResourceType,
               invalidate: true
             })
           } catch (firstAttemptError) {
-            console.log(`[Cloudinary Media API] First attempt failed with ${resourceType}, trying 'auto':`, firstAttemptError)
+            console.log(`[Cloudinary Media API] First attempt failed with ${rawResourceType}, trying different types:`, firstAttemptError)
 
-            // Fallback to 'auto' resource type
-            cloudinaryResult = await cloudinary.uploader.destroy(publicId, {
-              resource_type: 'auto',
-              invalidate: true
-            })
+            // Try different resource types
+            let success = false
+            for (const tryType of ['image', 'video', 'raw'] as const) {
+              try {
+                cloudinaryResult = await cloudinary.uploader.destroy(publicId, {
+                  resource_type: tryType,
+                  invalidate: true
+                })
+                success = true
+                break
+              } catch (attemptError) {
+                console.log(`[Cloudinary Media API] Failed with ${tryType}:`, attemptError)
+              }
+            }
+
+            if (!success) {
+              throw new Error('Failed to delete with any resource type')
+            }
           }
 
           console.log(`[Cloudinary Media API] Cloudinary delete result for ${publicId}:`, JSON.stringify(cloudinaryResult, null, 2))
@@ -310,14 +334,15 @@ export async function DELETE(request: NextRequest) {
             console.error(`[Cloudinary Media API] ❌ Cloudinary delete failed for ${publicId}:`, cloudinaryResult.result)
           }
 
-        } catch (cloudinaryError: any) {
+        } catch (cloudinaryError: unknown) {
           // Properly extract error details from Cloudinary error object
           if (cloudinaryError && typeof cloudinaryError === 'object') {
+            const errorObj = cloudinaryError as Record<string, unknown>
             cloudinaryErrorDetails = JSON.stringify({
-              message: cloudinaryError.message || 'Unknown error',
-              http_code: cloudinaryError.http_code || 'Unknown',
-              error: cloudinaryError.error || cloudinaryError,
-              name: cloudinaryError.name || 'CloudinaryError'
+              message: errorObj.message || 'Unknown error',
+              http_code: errorObj.http_code || 'Unknown',
+              error: errorObj.error || cloudinaryError,
+              name: errorObj.name || 'CloudinaryError'
             })
           } else {
             cloudinaryErrorDetails = String(cloudinaryError)
@@ -327,7 +352,7 @@ export async function DELETE(request: NextRequest) {
           console.error(`[Cloudinary Media API] Error details:`, {
             error_type: cloudinaryError instanceof Error ? cloudinaryError.constructor.name : typeof cloudinaryError,
             error_message: cloudinaryErrorDetails,
-            http_code: cloudinaryError?.http_code,
+            http_code: (cloudinaryError as Record<string, unknown>)?.http_code,
             cloudinary_available: !!cloudinary,
             env_vars: {
               cloud_name: !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
@@ -375,7 +400,7 @@ export async function DELETE(request: NextRequest) {
             error: `Failed to delete - ${errorDetails.join(', ')}`,
             cloudinary_success: cloudinaryDeleteSuccess,
             database_success: databaseDeleteSuccess,
-            cloudinary_error: cloudinaryErrorDetails
+            cloudinary_error: cloudinaryErrorDetails || undefined
           })
 
           console.error(`[Cloudinary Media API] ❌ Failed to delete ${publicId}:`, {

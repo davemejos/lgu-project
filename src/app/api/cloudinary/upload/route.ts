@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
 
     console.log('[Cloudinary API] Upload successful:', uploadResult.public_id)
 
-    // Phase 2 Enhancement: Immediate database sync + webhook simulation
+    // Immediate database sync
     let databaseSyncSuccess = false
     let databaseSyncError = null
     let immediateSync = false
@@ -130,8 +130,8 @@ export async function POST(request: NextRequest) {
         file_size: uploadResult.bytes,
         mime_type: file.type,
         format: uploadResult.format,
-        width: uploadResult.width || null,
-        height: uploadResult.height || null,
+        width: uploadResult.width || undefined,
+        height: uploadResult.height || undefined,
         folder: uploadResult.folder,
         tags: uploadResult.tags || [],
         description: description,
@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
         resource_type: uploadResult.resource_type as 'image' | 'video' | 'raw',
         cloudinary_created_at: uploadResult.created_at,
         sync_status: 'synced' as const,
-        uploaded_by: user?.id || null, // Add uploaded_by for RLS
+        uploaded_by: user?.id || undefined, // Add uploaded_by for RLS
         used_in_personnel: personnel_id,
         access_mode: 'public' as const // Add access_mode with default
       }
@@ -164,32 +164,9 @@ export async function POST(request: NextRequest) {
       databaseSyncSuccess = true
       console.log('[Cloudinary API] Media asset saved to database for bidirectional sync')
 
-      // Phase 2 Enhancement: Trigger immediate webhook simulation for real-time updates
-      try {
-        console.log('[Cloudinary API] [Phase 2] Triggering immediate webhook simulation...')
-
-        const webhookSimulation = {
-          notification_type: 'upload',
-          timestamp: new Date().toISOString(),
-          request_id: `upload_${Date.now()}`,
-          public_id: uploadResult.public_id,
-          resource_type: uploadResult.resource_type,
-          created_at: uploadResult.created_at,
-          tags: uploadResult.tags || [],
-          source: 'upload_api'
-        }
-
-        // Import the webhook handler function
-        const { BidirectionalSyncService } = await import('@/lib/bidirectionalSyncService')
-        await BidirectionalSyncService.handleCloudinaryWebhook(webhookSimulation)
-
-        immediateSync = true
-        console.log('[Cloudinary API] [Phase 2] Immediate webhook simulation completed successfully!')
-
-      } catch (webhookError) {
-        console.warn('[Cloudinary API] [Phase 2] Immediate webhook simulation failed:', webhookError)
-        // Don't fail the upload if webhook simulation fails
-      }
+      // Database sync completed successfully
+      immediateSync = true
+      console.log('[Cloudinary API] Database sync completed successfully!')
 
     } catch (dbError) {
       console.error('[Cloudinary API] Database sync failed:', dbError)
@@ -234,9 +211,7 @@ export async function POST(request: NextRequest) {
         error: databaseSyncError,
         immediate_sync: immediateSync,
         message: databaseSyncSuccess
-          ? immediateSync
-            ? '[Phase 2] File uploaded, synced to database, and real-time updates triggered!'
-            : 'File uploaded and synced to database successfully'
+          ? 'File uploaded and synced to database successfully'
           : 'File uploaded to Cloudinary but database sync failed - run database setup script'
       },
       warnings: databaseSyncSuccess ? [] : [

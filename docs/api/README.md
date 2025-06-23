@@ -43,11 +43,11 @@ DELETE /api/cloudinary/media          // Delete media items
 GET    /api/cloudinary/media/stats    // Get media statistics
 ```
 
-### **Webhook System**
+### **Sync System**
 ```typescript
-POST   /api/cloudinary/webhook        // Cloudinary webhook handler
-GET    /api/cloudinary/webhook        // Webhook configuration
-PUT    /api/cloudinary/webhook        // Simulate webhook (Phase 2)
+POST   /api/cloudinary/sync           // Manual sync operations
+GET    /api/sync/verify               // Verify sync integrity
+POST   /api/sync/verify               // Verify and fix sync issues
 ```
 
 ### **Synchronization**
@@ -165,8 +165,8 @@ interface ErrorResponse {
 # Test media endpoint
 curl -X GET "http://localhost:3000/api/cloudinary/media?page=1&limit=10"
 
-# Test webhook endpoint
-curl -X GET "http://localhost:3000/api/cloudinary/webhook"
+# Test sync endpoint
+curl -X POST "http://localhost:3000/api/cloudinary/sync"
 
 # Test sync status
 curl -X GET "http://localhost:3000/api/sync/status"

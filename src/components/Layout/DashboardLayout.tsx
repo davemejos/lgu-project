@@ -93,7 +93,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <footer className="bg-white border-t border-gray-200 px-6 py-4 flex-shrink-0">
           <div className="flex flex-col sm:flex-row justify-between items-center text-sm text-gray-600">
             <div className="flex items-center space-x-4">
-              <span>© 2024 Municipal Agriculture Office - Ipil</span>
+              <span>© 2024 Local Government Unit - Ipil</span>
               <span className="hidden sm:inline">•</span>
               <span className="hidden sm:inline">Fisheries Division</span>
             </div>

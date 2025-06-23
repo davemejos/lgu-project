@@ -116,12 +116,11 @@ CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 ```
 
-### 3. Cloudinary Webhook Setup
-1. Go to Cloudinary Console → Settings → Webhooks
-2. Add webhook URL: `https://yourdomain.com/api/cloudinary/webhook`
-3. Select events: `upload`, `delete`, `update`
-4. Enable signature verification
-5. Set format to JSON
+### 3. No Webhook Setup Required
+This integration works without Cloudinary webhooks:
+- Direct database sync during uploads
+- Manual sync available via `/api/cloudinary/sync`
+- Real-time updates via Supabase subscriptions
 
 ### 4. Verification
 ```bash

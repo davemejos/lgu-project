@@ -169,6 +169,33 @@ CREATE TABLE IF NOT EXISTS media_collection_items (
     UNIQUE(collection_id, media_asset_id)
 );
 
+-- Cloudinary cleanup queue for automatic bidirectional sync
+DROP TABLE IF EXISTS cloudinary_cleanup_queue CASCADE;
+CREATE TABLE cloudinary_cleanup_queue (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    cloudinary_public_id VARCHAR(500) NOT NULL,
+    resource_type VARCHAR(50) NOT NULL DEFAULT 'image',
+    original_filename VARCHAR(500),
+    file_size BIGINT,
+    folder VARCHAR(500),
+    deletion_reason VARCHAR(100) NOT NULL,
+    trigger_source VARCHAR(50) NOT NULL DEFAULT 'database',
+    triggered_by UUID,
+    queued_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    processed_at TIMESTAMP WITH TIME ZONE,
+    processing_attempts INTEGER DEFAULT 0,
+    max_attempts INTEGER DEFAULT 3,
+    status VARCHAR(20) DEFAULT 'pending',
+    cloudinary_response JSONB,
+    error_message TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    CONSTRAINT valid_status CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'skipped')),
+    CONSTRAINT valid_trigger_source CHECK (trigger_source IN ('database', 'api', 'manual', 'trigger')),
+    CONSTRAINT valid_resource_type CHECK (resource_type IN ('image', 'video', 'raw')),
+    CONSTRAINT positive_attempts CHECK (processing_attempts >= 0 AND max_attempts > 0)
+);
+
 CREATE TABLE IF NOT EXISTS sync_operations (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     operation_type VARCHAR(50) NOT NULL CHECK (operation_type IN ('upload', 'delete', 'update', 'full_sync', 'webhook')),
@@ -252,6 +279,11 @@ CREATE INDEX IF NOT EXISTS idx_media_collections_parent ON media_collections(par
 CREATE INDEX IF NOT EXISTS idx_media_collection_items_collection_id ON media_collection_items(collection_id);
 CREATE INDEX IF NOT EXISTS idx_media_collection_items_media_asset_id ON media_collection_items(media_asset_id);
 CREATE INDEX IF NOT EXISTS idx_sync_operations_status ON sync_operations(status);
+CREATE INDEX IF NOT EXISTS idx_cloudinary_cleanup_queue_status ON cloudinary_cleanup_queue(status);
+CREATE INDEX IF NOT EXISTS idx_cloudinary_cleanup_queue_queued_at ON cloudinary_cleanup_queue(queued_at);
+CREATE INDEX IF NOT EXISTS idx_cloudinary_cleanup_queue_public_id ON cloudinary_cleanup_queue(cloudinary_public_id);
+CREATE INDEX IF NOT EXISTS idx_cloudinary_cleanup_queue_processing_attempts ON cloudinary_cleanup_queue(processing_attempts);
+CREATE INDEX IF NOT EXISTS idx_cloudinary_cleanup_queue_trigger_source ON cloudinary_cleanup_queue(trigger_source);
 CREATE INDEX IF NOT EXISTS idx_sync_operations_type ON sync_operations(operation_type);
 CREATE INDEX IF NOT EXISTS idx_sync_operations_created_at ON sync_operations(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_connection_status_client ON connection_status(client_id);
@@ -338,6 +370,12 @@ END $$;
 
 DO $$ BEGIN
     ALTER TABLE media_collection_items ENABLE ROW LEVEL SECURITY;
+EXCEPTION
+    WHEN OTHERS THEN NULL;
+END $$;
+
+DO $$ BEGIN
+    ALTER TABLE cloudinary_cleanup_queue ENABLE ROW LEVEL SECURITY;
 EXCEPTION
     WHEN OTHERS THEN NULL;
 END $$;
@@ -430,6 +468,14 @@ DROP POLICY IF EXISTS "Allow service role full access to collection items" ON me
 CREATE POLICY "Allow service role full access to collection items" ON media_collection_items
     FOR ALL USING (auth.role() = 'service_role');
 
+DROP POLICY IF EXISTS "Allow service role full access to cleanup queue" ON cloudinary_cleanup_queue;
+CREATE POLICY "Allow service role full access to cleanup queue" ON cloudinary_cleanup_queue
+    FOR ALL USING (auth.role() = 'service_role');
+
+DROP POLICY IF EXISTS "Allow authenticated users to read cleanup queue" ON cloudinary_cleanup_queue;
+CREATE POLICY "Allow authenticated users to read cleanup queue" ON cloudinary_cleanup_queue
+    FOR SELECT USING (auth.role() = 'authenticated');
+
 CREATE OR REPLACE FUNCTION soft_delete_media_asset(asset_id TEXT, deleted_by_user TEXT DEFAULT NULL)
 RETURNS BOOLEAN AS $$
 DECLARE
@@ -503,6 +549,117 @@ BEGIN
         sync_retry_count = CASE WHEN new_status = 'error' THEN sync_retry_count + 1 ELSE 0 END
     WHERE cloudinary_public_id = asset_id;
     RETURN FOUND;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to queue Cloudinary cleanup operations
+CREATE OR REPLACE FUNCTION queue_cloudinary_cleanup(
+    public_id TEXT,
+    resource_type TEXT DEFAULT 'image',
+    original_filename TEXT DEFAULT NULL,
+    file_size BIGINT DEFAULT NULL,
+    folder TEXT DEFAULT NULL,
+    deletion_reason TEXT DEFAULT 'database_deletion',
+    trigger_source TEXT DEFAULT 'database',
+    triggered_by_user TEXT DEFAULT NULL
+)
+RETURNS UUID AS $$
+DECLARE
+    queue_id UUID;
+    triggered_by_uuid UUID;
+BEGIN
+    -- Convert triggered_by to UUID if provided
+    IF triggered_by_user IS NOT NULL AND triggered_by_user != '' THEN
+        triggered_by_uuid := triggered_by_user::UUID;
+    END IF;
+
+    -- Insert into cleanup queue
+    INSERT INTO cloudinary_cleanup_queue (
+        cloudinary_public_id,
+        resource_type,
+        original_filename,
+        file_size,
+        folder,
+        deletion_reason,
+        trigger_source,
+        triggered_by,
+        status
+    ) VALUES (
+        public_id,
+        resource_type,
+        original_filename,
+        file_size,
+        folder,
+        deletion_reason,
+        trigger_source,
+        triggered_by_uuid,
+        'pending'
+    ) RETURNING id INTO queue_id;
+
+    RETURN queue_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to update cleanup queue status
+CREATE OR REPLACE FUNCTION update_cleanup_queue_status(
+    queue_id UUID,
+    new_status TEXT,
+    cloudinary_response JSONB DEFAULT NULL,
+    error_msg TEXT DEFAULT NULL
+)
+RETURNS BOOLEAN AS $$
+BEGIN
+    UPDATE cloudinary_cleanup_queue
+    SET
+        status = new_status,
+        processed_at = CASE WHEN new_status IN ('completed', 'failed', 'skipped') THEN NOW() ELSE processed_at END,
+        processing_attempts = CASE WHEN new_status = 'processing' THEN processing_attempts + 1 ELSE processing_attempts END,
+        cloudinary_response = COALESCE(cloudinary_response, cloudinary_cleanup_queue.cloudinary_response),
+        error_message = COALESCE(error_msg, cloudinary_cleanup_queue.error_message),
+        updated_at = NOW()
+    WHERE id = queue_id;
+    RETURN FOUND;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Function to get pending cleanup items
+CREATE OR REPLACE FUNCTION get_pending_cleanup_items(
+    limit_count INTEGER DEFAULT 10
+)
+RETURNS TABLE (
+    id UUID,
+    cloudinary_public_id VARCHAR(500),
+    resource_type VARCHAR(50),
+    original_filename VARCHAR(500),
+    file_size BIGINT,
+    folder VARCHAR(500),
+    deletion_reason VARCHAR(100),
+    trigger_source VARCHAR(50),
+    triggered_by UUID,
+    queued_at TIMESTAMP WITH TIME ZONE,
+    processing_attempts INTEGER,
+    max_attempts INTEGER
+) AS $$
+BEGIN
+    RETURN QUERY
+    SELECT
+        q.id,
+        q.cloudinary_public_id,
+        q.resource_type,
+        q.original_filename,
+        q.file_size,
+        q.folder,
+        q.deletion_reason,
+        q.trigger_source,
+        q.triggered_by,
+        q.queued_at,
+        q.processing_attempts,
+        q.max_attempts
+    FROM cloudinary_cleanup_queue q
+    WHERE q.status = 'pending'
+      AND q.processing_attempts < q.max_attempts
+    ORDER BY q.queued_at ASC
+    LIMIT limit_count;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
@@ -686,6 +843,97 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON media_assets TO anon;
 ALTER PUBLICATION supabase_realtime ADD TABLE media_sync_log;
 ALTER PUBLICATION supabase_realtime ADD TABLE sync_operations;
 ALTER PUBLICATION supabase_realtime ADD TABLE connection_status;
+ALTER PUBLICATION supabase_realtime ADD TABLE cloudinary_cleanup_queue;
+
+-- =====================================================
+-- AUTOMATIC CLOUDINARY CLEANUP TRIGGERS
+-- =====================================================
+
+-- Trigger function to automatically delete from Cloudinary when media assets are deleted
+CREATE OR REPLACE FUNCTION trigger_cloudinary_cleanup()
+RETURNS TRIGGER AS $$
+DECLARE
+    cloudinary_url TEXT;
+    api_key TEXT;
+    api_secret TEXT;
+    cloud_name TEXT;
+    timestamp_str TEXT;
+    signature_str TEXT;
+    auth_header TEXT;
+    delete_url TEXT;
+    response_status INTEGER;
+BEGIN
+    -- Get Cloudinary credentials
+    cloud_name := current_setting('app.cloudinary_cloud_name', true);
+    api_key := current_setting('app.cloudinary_api_key', true);
+    api_secret := current_setting('app.cloudinary_api_secret', true);
+
+    -- If credentials not available, skip Cloudinary deletion
+    IF cloud_name IS NULL OR api_key IS NULL OR api_secret IS NULL THEN
+        RAISE NOTICE 'Cloudinary credentials not configured, skipping deletion for: %',
+            COALESCE(OLD.cloudinary_public_id, NEW.cloudinary_public_id);
+        RETURN COALESCE(NEW, OLD);
+    END IF;
+
+    -- Handle both hard deletes and soft deletes
+    IF TG_OP = 'DELETE' OR (TG_OP = 'UPDATE' AND OLD.deleted_at IS NULL AND NEW.deleted_at IS NOT NULL) THEN
+        -- Generate timestamp
+        timestamp_str := extract(epoch from now())::text;
+
+        -- Create signature for Cloudinary API
+        signature_str := 'public_id=' || OLD.cloudinary_public_id || '&timestamp=' || timestamp_str || api_secret;
+
+        -- Make HTTP request to delete from Cloudinary
+        delete_url := 'https://api.cloudinary.com/v1_1/' || cloud_name || '/image/destroy';
+
+        -- Use pg_net extension to make the HTTP request
+        SELECT status INTO response_status FROM net.http_post(
+            url := delete_url,
+            headers := jsonb_build_object(
+                'Content-Type', 'application/x-www-form-urlencoded'
+            ),
+            body := 'public_id=' || OLD.cloudinary_public_id ||
+                   '&api_key=' || api_key ||
+                   '&timestamp=' || timestamp_str ||
+                   '&signature=' || encode(digest(signature_str, 'sha1'), 'hex')
+        );
+
+        -- Log the result
+        IF response_status = 200 THEN
+            RAISE NOTICE 'Successfully deleted from Cloudinary: %', OLD.cloudinary_public_id;
+        ELSE
+            RAISE WARNING 'Failed to delete from Cloudinary: % (status: %)', OLD.cloudinary_public_id, response_status;
+        END IF;
+    END IF;
+
+    RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create triggers for automatic Cloudinary cleanup
+DROP TRIGGER IF EXISTS media_assets_cleanup_trigger ON media_assets;
+CREATE TRIGGER media_assets_cleanup_trigger
+    AFTER DELETE OR UPDATE ON media_assets
+    FOR EACH ROW
+    EXECUTE FUNCTION trigger_cloudinary_cleanup();
+
+-- Create a function to execute SQL statements (for setup)
+CREATE OR REPLACE FUNCTION execute_setup_sql(sql_statements TEXT[])
+RETURNS BOOLEAN AS $$
+DECLARE
+    stmt TEXT;
+BEGIN
+    FOREACH stmt IN ARRAY sql_statements
+    LOOP
+        EXECUTE stmt;
+    END LOOP;
+    RETURN TRUE;
+EXCEPTION
+    WHEN OTHERS THEN
+        RAISE NOTICE 'Error executing SQL: %', SQLERRM;
+        RETURN FALSE;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Step 6: Verify the publication includes all necessary tables
 -- This will show which tables are included in realtime

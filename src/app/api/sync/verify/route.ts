@@ -12,7 +12,7 @@ import { BidirectionalSyncService } from '@/lib/bidirectionalSyncService'
  * GET /api/sync/verify
  * Verify sync integrity between Cloudinary and Supabase
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     console.log('[Sync Verify API] Starting sync integrity verification...')
 
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     // First, perform verification
     const verificationResult = await BidirectionalSyncService.verifySyncIntegrity()
     
-    let fixResults = {
+    const fixResults = {
       fixed_missing_in_database: 0,
       fixed_conflicts: 0,
       fix_errors: [] as string[]

@@ -65,7 +65,7 @@ body {
 .dashboard-banner,
 [class*="dashboard-banner"] {
   border-radius: 1rem;
-  background: linear-gradient(to right, #2563eb, #4f46e5);
+  background: linear-gradient(to right, #0c035f, #4f46e5);
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   padding: 2rem;
   color: white;
@@ -232,7 +232,7 @@ a:hover,
 /* Prevent layout shifts on dashboard banner */
 .dashboard-banner {
   border-radius: 1rem !important;
-  background: linear-gradient(to right, #2563eb, #4f46e5) !important;
+  background: linear-gradient(to right, #0c035f, #4f46e5) !important;
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05) !important;
   padding: 2rem !important;
   color: white !important;
@@ -267,3 +267,5 @@ a:hover,
 ::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
+
+

@@ -114,6 +114,14 @@ export class SupabaseMediaService {
   )
 
   /**
+   * Get the Supabase client instance
+   * @returns Supabase client for database operations
+   */
+  static getClient() {
+    return this.supabase
+  }
+
+  /**
    * Create or update media asset in database
    */
   static async upsertMediaAsset(asset: Partial<MediaAsset>): Promise<MediaAsset> {
@@ -436,6 +444,112 @@ export class SupabaseMediaService {
       return data as MediaSyncLog
     } catch (error) {
       console.error('[SupabaseMediaService] Log sync operation failed:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Queue Cloudinary cleanup operation
+   */
+  static async queueCloudinaryCleanup(
+    publicId: string,
+    resourceType: string = 'image',
+    options: {
+      originalFilename?: string
+      fileSize?: number
+      folder?: string
+      deletionReason?: string
+      triggerSource?: string
+      triggeredBy?: string
+    } = {}
+  ): Promise<string> {
+    try {
+      console.log('[SupabaseMediaService] Queueing Cloudinary cleanup:', publicId)
+
+      const { data, error } = await this.supabase
+        .rpc('queue_cloudinary_cleanup', {
+          public_id: publicId,
+          resource_type: resourceType,
+          original_filename: options.originalFilename,
+          file_size: options.fileSize,
+          folder: options.folder,
+          deletion_reason: options.deletionReason || 'manual_deletion',
+          trigger_source: options.triggerSource || 'api',
+          triggered_by_user: options.triggeredBy
+        })
+
+      if (error) {
+        throw new Error(`Failed to queue Cloudinary cleanup: ${error.message}`)
+      }
+
+      return data as string
+    } catch (error) {
+      console.error('[SupabaseMediaService] Queue cleanup failed:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Get pending cleanup items
+   */
+  static async getPendingCleanupItems(limit: number = 10): Promise<Array<{
+    id: string
+    cloudinary_public_id: string
+    resource_type: string
+    original_filename?: string
+    file_size?: number
+    folder?: string
+    deletion_reason: string
+    trigger_source: string
+    triggered_by?: string
+    queued_at: string
+    processing_attempts: number
+    max_attempts: number
+  }>> {
+    try {
+      console.log('[SupabaseMediaService] Getting pending cleanup items...')
+
+      const { data, error } = await this.supabase
+        .rpc('get_pending_cleanup_items', { limit_count: limit })
+
+      if (error) {
+        throw new Error(`Failed to get pending cleanup items: ${error.message}`)
+      }
+
+      return data || []
+    } catch (error) {
+      console.error('[SupabaseMediaService] Get pending cleanup items failed:', error)
+      throw error
+    }
+  }
+
+  /**
+   * Update cleanup queue status
+   */
+  static async updateCleanupQueueStatus(
+    queueId: string,
+    status: string,
+    cloudinaryResponse?: unknown,
+    errorMessage?: string
+  ): Promise<boolean> {
+    try {
+      console.log('[SupabaseMediaService] Updating cleanup queue status:', queueId, status)
+
+      const { data, error } = await this.supabase
+        .rpc('update_cleanup_queue_status', {
+          queue_id: queueId,
+          new_status: status,
+          cloudinary_response: cloudinaryResponse ? JSON.stringify(cloudinaryResponse) : null,
+          error_msg: errorMessage
+        })
+
+      if (error) {
+        throw new Error(`Failed to update cleanup queue status: ${error.message}`)
+      }
+
+      return data as boolean
+    } catch (error) {
+      console.error('[SupabaseMediaService] Update cleanup queue status failed:', error)
       throw error
     }
   }

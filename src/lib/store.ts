@@ -18,7 +18,7 @@ import usersReducer from './redux/slices/usersSlice'
 import uiReducer from './redux/slices/uiSlice'
 import settingsReducer from './redux/slices/settingsSlice'
 import mediaReducer from './redux/slices/mediaSlice'
-import syncStatusReducer from './redux/slices/syncStatusSlice'
+
 
 // Configure the store
 export const store = configureStore({
@@ -29,7 +29,7 @@ export const store = configureStore({
     ui: uiReducer,
     settings: settingsReducer,
     media: mediaReducer,
-    syncStatus: syncStatusReducer,
+
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

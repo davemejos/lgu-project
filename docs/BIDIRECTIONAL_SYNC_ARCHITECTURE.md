@@ -215,13 +215,16 @@ Cloudinary ←→ Sync Service ←→ Supabase Database
 }
 ```
 
-### **POST /api/cloudinary/webhook**
+### **POST /api/cloudinary/sync (Single Asset)**
 ```typescript
-// Handle Cloudinary notifications
+// Sync specific asset by public_id
 {
   success: boolean,
-  processing_time_ms: number,
-  message: string
+  synced_items: number,
+  updated_items: number,
+  deleted_items: number,
+  duration_ms: number,
+  errors: string[]
 }
 ```
 
@@ -249,12 +252,11 @@ NEXT_PUBLIC_SUPABASE_URL=https://lkolpgpmdculqqfqyzaf.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ```
 
-### **Webhook Setup**
-1. Go to Cloudinary Console → Settings → Webhooks
-2. Add webhook URL: `https://yourdomain.com/api/cloudinary/webhook`
-3. Select events: `upload`, `delete`, `update`
-4. Enable signature verification
-5. Set notification format to JSON
+### **No Webhook Setup Required**
+This integration works without Cloudinary webhooks:
+1. Direct database sync during uploads
+2. Manual sync available via API
+3. Real-time updates via Supabase subscriptions
 
 ## 🎯 Benefits Achieved
 
